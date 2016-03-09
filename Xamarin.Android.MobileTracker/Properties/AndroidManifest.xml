@@ -2,4 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="Xamarin.Android.MobileTracker.Xamarin.Android.MobileTracker" android:versionCode="1" android:versionName="1.0" android:installLocation="auto">
 	<uses-sdk />
 	<application android:label="Xamarin.Android.MobileTracker" android:icon="@drawable/Icon"></application>
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>
