@@ -16,6 +16,9 @@ using Android;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
+[assembly: UsesPermission(Manifest.Permission.Internet)]
+[assembly: UsesPermission(Manifest.Permission.AccessFineLocation)]
+[assembly: UsesPermission(Manifest.Permission.AccessCoarseLocation)]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,6 +32,3 @@ using Android;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: UsesPermission(Manifest.Permission.Internet)]
-[assembly: UsesPermission(Manifest.Permission.AccessFineLocation)]
-[assembly: UsesPermission(Manifest.Permission.AccessCoarseLocation)]

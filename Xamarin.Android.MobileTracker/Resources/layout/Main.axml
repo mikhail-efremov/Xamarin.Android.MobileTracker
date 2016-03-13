@@ -13,6 +13,13 @@
         android:text="Location (when available)"
         android:id="@+id/location_text"
         android:layout_marginBottom="15dp" />
+    <TextView
+        android:layout_width="fill_parent"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_height="wrap_content"
+        android:text="count"
+        android:id="@+id/count_text"
+        android:layout_marginBottom="15dp" />
     <Button
         android:layout_width="fill_parent"
         android:textAppearance="?android:attr/textAppearanceMedium"

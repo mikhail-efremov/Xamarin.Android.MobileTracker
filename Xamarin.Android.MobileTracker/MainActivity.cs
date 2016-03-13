@@ -15,15 +15,16 @@ using System.Xml.Linq;
 
 namespace Xamarin.Android.MobileTracker
 {
-    [Activity(Label = "07Xamarin.Android.MobileTracker", MainLauncher = true, Icon = "@drawable/icon")]
+    [Activity(Label = "11Xamarin.Android.MobileTracker", MainLauncher = true, Icon = "@drawable/icon")]
     public class MainActivity : Activity, ILocationListener
     {
-        int count = 1;
-
         static readonly string TAG = "X:" + typeof(MainActivity).Name;
         TextView _addressText;
+        private TextView _countText;
         Location _currentLocation;
         LocationManager _locationManager;
+
+        public int count = 0;
 
         string _locationProvider;
         TextView _locationText;
@@ -39,6 +40,7 @@ namespace Xamarin.Android.MobileTracker
 
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
+            _countText = FindViewById<TextView>(Resource.Id.count_text);
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
 
             InitializeLocationManager();
@@ -58,11 +60,11 @@ namespace Xamarin.Android.MobileTracker
         void InitializeLocationManager()
         {
             _locationManager = (LocationManager)GetSystemService(LocationService);
-            Criteria criteriaForLocationService = new Criteria
+            var criteriaForLocationService = new Criteria
             {
                 Accuracy = Accuracy.Fine
             };
-            IList<string> acceptableLocationProviders = _locationManager.GetProviders(criteriaForLocationService, true);
+            var acceptableLocationProviders = _locationManager.GetProviders(criteriaForLocationService, true);
 
             if (acceptableLocationProviders.Any())
             {
@@ -75,17 +77,33 @@ namespace Xamarin.Android.MobileTracker
             Log.Debug(TAG, "Using " + _locationProvider + ".");
         }
 
-        async void AddressButton_OnClick(object sender, EventArgs eventArgs)
+        private async void AddressButton_OnClick(object sender, EventArgs eventArgs)
         {
+            count++;
+            _countText.Text = count.ToString();
+
+
+            if (_locationManager.IsProviderEnabled(LocationManager.NetworkProvider))
+            {
+                _locationManager.RequestLocationUpdates(LocationManager.NetworkProvider, 0, 0, this);
+            }
+            _locationManager.RequestLocationUpdates(LocationManager.GpsProvider, 0, 0, this);
+
+            if(_currentLocation != null)
+            if (_currentLocation.Latitude != 0)
+                _countText.Text = _currentLocation.Latitude.ToString();
+
+
+
             _locationManager = (LocationManager)GetSystemService(LocationService);
-            Location lastKnownLocation = _locationManager.GetLastKnownLocation(_locationProvider);
-            
-               // DisplayAlert("Alert", "You have been alerted", "OK");
+
+            _locationManager.GetLastKnownLocation(_locationProvider);
+
+            // DisplayAlert("Alert", "You have been alerted", "OK");
 
             // You can set the thresholds that suit you here.
-          //  _locationManager.RequestLocationUpdates(_locationProvider, 5000, 2, this);
 
-          //  _locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
+            //  _locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
             if (_currentLocation == null)
             {
                 _addressText.Text = "Can't determine the current address. Try again in a few minutes.";
@@ -98,11 +116,11 @@ namespace Xamarin.Android.MobileTracker
 
         async Task<Address> ReverseGeocodeCurrentLocation()
         {
-            Geocoder geocoder = new Geocoder(this);
-            IList<Address> addressList =
+            var geocoder = new Geocoder(this);
+            var addressList =
                 await geocoder.GetFromLocationAsync(_currentLocation.Latitude, _currentLocation.Longitude, 10);
 
-            Address address = addressList.FirstOrDefault();
+            var address = addressList.FirstOrDefault();
             return address;
         }
 
@@ -110,7 +128,7 @@ namespace Xamarin.Android.MobileTracker
         {
             if (address != null)
             {
-                StringBuilder deviceAddress = new StringBuilder();
+                var deviceAddress = new StringBuilder();
                 for (int i = 0; i < address.MaxAddressLineIndex; i++)
                 {
                     deviceAddress.AppendLine(address.GetAddressLine(i));
