@@ -69,6 +69,9 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f050002
 			public const int get_address_button = 2131034114;
 			
+			// aapt resource value: 0x7f050004
+			public const int info_text = 2131034116;
+			
 			// aapt resource value: 0x7f050000
 			public const int location_text = 2131034112;
 			

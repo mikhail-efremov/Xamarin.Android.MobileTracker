@@ -19,6 +19,9 @@ using Android;
 [assembly: UsesPermission(Manifest.Permission.Internet)]
 [assembly: UsesPermission(Manifest.Permission.AccessFineLocation)]
 [assembly: UsesPermission(Manifest.Permission.AccessCoarseLocation)]
+[assembly: UsesPermission(Manifest.Permission.InstallLocationProvider)]
+[assembly: UsesPermission(Manifest.Permission.AccessMockLocation)]
+[assembly: UsesPermission(Manifest.Permission.AccessLocationExtraCommands)]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -33,4 +33,18 @@
         android:text="Address (when available)"
         android:id="@+id/address_text"
         android:layout_marginTop="10dp" />
+    <TextView
+        android:layout_width="fill_parent"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_height="wrap_content"
+        android:text="Info Text"
+        android:id="@+id/info_text"
+        android:layout_marginTop="10dp" />
+    <TextView
+        android:layout_width="fill_parent"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_height="wrap_content"
+        android:text="Info Text"
+        android:id="@+id/info_text"
+        android:layout_marginTop="10dp" />
 </LinearLayout>
