@@ -11,20 +11,24 @@ using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
+    public delegate void OnLocationChanged(Location location);
+
     [Activity(Label = "14 Xamarin.Android.MobileTracker", MainLauncher = true, Icon = "@drawable/icon")]
     public class MainActivity : Activity, ILocationListener
     {
-        private static readonly string Tag = "X:" + typeof(MainActivity).Name;
-        TextView _addressText;
-        private TextView _countText;
-        Location _currentLocation;
-        LocationManager _locationManager;
-
         public int Count;
 
         public string LocationProvider;
         public TextView LocationText;
         public TextView InfoText;
+
+        private static readonly string Tag = "X:" + typeof(MainActivity).Name;
+        private TextView _addressText;
+        private TextView _countText;
+        private Location _currentLocation;
+        private LocationManager _locationManager;
+        private LogicManager _logicManager;
+        private OnLocationChanged _onLocationChanged;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -35,15 +39,16 @@ namespace Xamarin.Android.MobileTracker
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
+            _logicManager = new LogicManager();
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             LocationText = FindViewById<TextView>(Resource.Id.location_text);
             InfoText = FindViewById<TextView>(Resource.Id.info_text);
             _countText = FindViewById<TextView>(Resource.Id.count_text);
+
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
-
+            _onLocationChanged += _logicManager.OnLocationChanged;
+            
             InitializeLocationManager();
-
-            InfoText.Text = new Person().Process().ToString();
         }
 
         protected override void OnResume()
@@ -96,8 +101,7 @@ namespace Xamarin.Android.MobileTracker
             _locationManager = (LocationManager)GetSystemService(LocationService);
 
             _locationManager.GetLastKnownLocation(LocationProvider);
-
-
+            
             if (_currentLocation == null)
             {
                 _addressText.Text = "Can't determine the current address. Try again in a few minutes.";
@@ -108,7 +112,7 @@ namespace Xamarin.Android.MobileTracker
             DisplayAddress(address);
         }
 
-        async Task<Address> ReverseGeocodeCurrentLocation()
+        private async Task<Address> ReverseGeocodeCurrentLocation()
         {
             var geocoder = new Geocoder(this);
             var addressList =
@@ -118,12 +122,12 @@ namespace Xamarin.Android.MobileTracker
             return address;
         }
 
-        void DisplayAddress(Address address)
+        private void DisplayAddress(Address address)
         {
             if (address != null)
             {
                 var deviceAddress = new StringBuilder();
-                for (int i = 0; i < address.MaxAddressLineIndex; i++)
+                for (var i = 0; i < address.MaxAddressLineIndex; i++)
                 {
                     deviceAddress.AppendLine(address.GetAddressLine(i));
                 }
@@ -140,6 +144,8 @@ namespace Xamarin.Android.MobileTracker
 
         public async void OnLocationChanged(Location location)
         {
+            _onLocationChanged(location);
+
             _currentLocation = location;
             if (_currentLocation == null)
             {
