@@ -12,6 +12,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public Configuration ()
         {
+            MinTime = 10;
+            MinDistance = 10;
         }
 
         public Configuration(long minTime, int minDistance)

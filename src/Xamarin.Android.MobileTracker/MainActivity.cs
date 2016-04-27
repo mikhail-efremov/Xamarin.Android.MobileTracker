@@ -7,6 +7,7 @@ using Android.Util;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using Android.Content;
 using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
@@ -33,6 +34,15 @@ namespace Xamarin.Android.MobileTracker
 
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             _logicManager.OnLocationChangedEvent += OnLocationChanged;
+
+
+            Button callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
+            callHistoryButton.Click += (sender, e) =>
+            {
+                var intent = new Intent(this, typeof(MapActivity));
+      //          intent.PutStringArrayListExtra("phone_numbers", phoneNumbers);
+                StartActivity(intent);
+            };
         }
 
         protected override void OnResume()

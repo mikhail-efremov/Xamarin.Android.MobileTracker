@@ -2,4 +2,5 @@
 <resources>
     <string name="Hello">Hello World, Click Me!</string>
     <string name="ApplicationName">Xamarin.Android.MobileTracker</string>
+    <string name="callMap">Map</string>
 </resources>
