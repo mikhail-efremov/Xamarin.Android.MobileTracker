@@ -55,7 +55,7 @@ namespace Xamarin.Android.MobileTracker
                 return;
             }
 
-            Address address = await ReverseGeocodeCurrentLocation();
+            var address = await ReverseGeocodeCurrentLocation();
             DisplayAddress(address);
         }
 

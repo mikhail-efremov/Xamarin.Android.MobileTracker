@@ -10,16 +10,18 @@ namespace Xamarin.Android.MobileTracker.ActivityData
     {
         public OnLocationChanged OnLocationChangedEvent;
         private LocationListener _locationListener;
+        private Configuration _configuration;
 
         public LogicManager()
         {
+            _configuration = new Configuration();
         }
 
         public void StartRequestLocation(LocationManager locationManager)
         {
             _locationListener = new LocationListener(locationManager);
             _locationListener.OnLocationChangedEvent += OnLocationChanged;
-            _locationListener.RequestLocation(5, 5);
+            _locationListener.RequestLocation(_configuration.MinTime, _configuration.MinDistance);
         }
 
         public void StopRequestLocation()

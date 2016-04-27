@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityData\Configuration.cs" />
     <Compile Include="ActivityData\LocationListener.cs" />
     <Compile Include="ActivityData\LogicManager.cs" />
     <Compile Include="ActivityData\Point.cs" />
