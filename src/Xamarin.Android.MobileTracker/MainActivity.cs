@@ -11,97 +11,44 @@ using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
-    public delegate void OnLocationChanged(Location location);
-
     [Activity(Label = "14 Xamarin.Android.MobileTracker", MainLauncher = true, Icon = "@drawable/icon")]
-    public class MainActivity : Activity, ILocationListener
+    public class MainActivity : Activity
     {
-        public int Count;
-
-        public string LocationProvider;
-        public TextView LocationText;
-        public TextView InfoText;
-
-        private static readonly string Tag = "X:" + typeof(MainActivity).Name;
+        public static readonly string Tag = "X:" + typeof(MainActivity).Name;
         private TextView _addressText;
-        private TextView _countText;
-        private Location _currentLocation;
-        private LocationManager _locationManager;
         private LogicManager _logicManager;
+        private TextView _locationText;
         private OnLocationChanged _onLocationChanged;
+        private Location _currentLocation;
 
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-
-            InitializeLocationManager();
-
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
             _logicManager = new LogicManager();
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
-            LocationText = FindViewById<TextView>(Resource.Id.location_text);
-            InfoText = FindViewById<TextView>(Resource.Id.info_text);
-            _countText = FindViewById<TextView>(Resource.Id.count_text);
+            _locationText = FindViewById<TextView>(Resource.Id.location_text);
 
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
-            _onLocationChanged += _logicManager.OnLocationChanged;
-            
-            InitializeLocationManager();
+            _logicManager.OnLocationChangedEvent += OnLocationChanged;
         }
 
         protected override void OnResume()
         {
             base.OnResume();
-            Count++;
-            _countText.Text = Count.ToString();
-
-
-            if (_locationManager.IsProviderEnabled(LocationManager.NetworkProvider))
-            {
-             //   _locationManager.RequestLocationUpdates(LocationManager.NetworkProvider, 0, 0, this);
-            }
-            else
-            {
-                Log.Info(Tag, "NetworkProvider is not avaible");
-            }
-            _locationManager.RequestLocationUpdates(LocationManager.GpsProvider, 0, 0, this);
-
-            if (_currentLocation != null)
-                Log.Info(Tag, "Latitude: " + _currentLocation.Latitude);
+            _logicManager.StartRequestLocation((LocationManager)GetSystemService(LocationService));
         }
 
         protected override void OnPause()
         {
             base.OnPause();
-            _locationManager.RemoveUpdates(this);
-        }
-
-        private void InitializeLocationManager()
-        {
-            _locationManager = (LocationManager)GetSystemService(LocationService);
-            var criteriaForLocationService = new Criteria
-            {
-                Accuracy = Accuracy.Fine
-            };
-            var acceptableLocationProviders = _locationManager.GetProviders(criteriaForLocationService, true);
-
-            LocationProvider = acceptableLocationProviders.Any() ? acceptableLocationProviders.First() : string.Empty;
-            Log.Debug(Tag, "Using " + LocationProvider + ".");
+            _logicManager.StopRequestLocation();
         }
 
         private async void AddressButton_OnClick(object sender, EventArgs eventArgs)
         {
-            Count++;
-            _countText.Text = Count.ToString();
-
-            _locationManager.RequestLocationUpdates(LocationManager.GpsProvider, 0, 0, this);
-            
-            _locationManager = (LocationManager)GetSystemService(LocationService);
-
-            _locationManager.GetLastKnownLocation(LocationProvider);
-            
             if (_currentLocation == null)
             {
                 _addressText.Text = "Can't determine the current address. Try again in a few minutes.";
@@ -140,30 +87,19 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
-        // removed code for clarity
-
-        public async void OnLocationChanged(Location location)
+        private async void OnLocationChanged(Location location)
         {
-            _onLocationChanged(location);
-
-            _currentLocation = location;
-            if (_currentLocation == null)
+            if (location == null)
             {
-                LocationText.Text = "Unable to determine your location. Try again in a short while.";
+                Console.WriteLine("Unable to determine your location. Try again in a short while.");
             }
             else
             {
-                LocationText.Text = $"{_currentLocation.Latitude:f6},{_currentLocation.Longitude:f6}";
+                _currentLocation = location;
+                _locationText.Text = "Lat:" + _currentLocation.Latitude + " Lon:" + _currentLocation.Longitude;
                 var address = await ReverseGeocodeCurrentLocation();
                 DisplayAddress(address);
             }
         }
-
-        public void OnProviderDisabled(string provider) { }
-
-        public void OnProviderEnabled(string provider) { }
-
-        public void OnStatusChanged(string provider, Availability status, Bundle extras) { }
     }
 }
-

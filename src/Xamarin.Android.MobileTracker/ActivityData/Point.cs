@@ -48,7 +48,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public int SaveInBase()
         {
-            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "database.db3");
+            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
             var db = new SQLiteConnection(dbPath);
             
             db.CreateTable<Point>();
