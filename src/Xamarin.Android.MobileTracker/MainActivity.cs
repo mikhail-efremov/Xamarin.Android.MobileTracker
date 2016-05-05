@@ -22,6 +22,7 @@ namespace Xamarin.Android.MobileTracker
         private TextView _addressText;
         private LogicManager _logicManager;
         private TextView _locationText;
+        private TextView _errorText;
         private OnLocationChanged _onLocationChanged;
         private Location _currentLocation;
         private LocationManager _locationManager;
@@ -35,6 +36,7 @@ namespace Xamarin.Android.MobileTracker
             _logicManager = new LogicManager();
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
+            _errorText = FindViewById<TextView>(Resource.Id.textErrorInfo);
 
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
@@ -80,59 +82,101 @@ namespace Xamarin.Android.MobileTracker
             //20160504114928 - send time
             //1192 - count num
             //$ - tail character
-
-            _logicManager.ForceRequestLocation();
+            try
+            {
+                _logicManager.ForceRequestLocation();
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
         protected override void OnResume()
         {
-            base.OnResume();
-            _logicManager.StartRequestLocation(_locationManager);
+            try
+            {
+                base.OnResume();
+                _logicManager.StartRequestLocation(_locationManager);
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
         protected override void OnPause()
         {
-            base.OnPause();
-            _logicManager.StopRequestLocation();
+            try
+            {
+                base.OnPause();
+                _logicManager.StopRequestLocation();
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
         private async void AddressButton_OnClick(object sender, EventArgs eventArgs)
         {
-            if (_currentLocation == null)
+            try
             {
-                _addressText.Text = "Can't determine the current address. Try again in a few minutes.";
-                return;
-            }
+                if (_currentLocation == null)
+                {
+                    _addressText.Text = "Can't determine the current address. Try again in a few minutes.";
+                    return;
+                }
 
-            var address = await ReverseGeocodeCurrentLocation();
-            DisplayAddress(address);
+                var address = await ReverseGeocodeCurrentLocation();
+                DisplayAddress(address);
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
         private async Task<Address> ReverseGeocodeCurrentLocation()
         {
-            var geocoder = new Geocoder(this);
-            var addressList =
-                await geocoder.GetFromLocationAsync(_currentLocation.Latitude, _currentLocation.Longitude, 10);
+            try
+            {
+                var geocoder = new Geocoder(this);
+                var addressList =
+                    await geocoder.GetFromLocationAsync(_currentLocation.Latitude, _currentLocation.Longitude, 10);
 
-            var address = addressList.FirstOrDefault();
-            return address;
+                var address = addressList.FirstOrDefault();
+                return address;
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
+            return null;
         }
 
         private void DisplayAddress(Address address)
         {
-            if (address != null)
+            try
             {
-                var deviceAddress = new StringBuilder();
-                for (var i = 0; i < address.MaxAddressLineIndex; i++)
+                if (address != null)
                 {
-                    deviceAddress.AppendLine(address.GetAddressLine(i));
+                    var deviceAddress = new StringBuilder();
+                    for (var i = 0; i < address.MaxAddressLineIndex; i++)
+                    {
+                        deviceAddress.AppendLine(address.GetAddressLine(i));
+                    }
+                    // Remove the last comma from the end of the address.
+                    _addressText.Text = deviceAddress.ToString();
                 }
-                // Remove the last comma from the end of the address.
-                _addressText.Text = deviceAddress.ToString();
+                else
+                {
+                    _addressText.Text = "Unable to determine the address. Try again in a few minutes.";
+                }
             }
-            else
+            catch (Exception e)
             {
-                _addressText.Text = "Unable to determine the address. Try again in a few minutes.";
+                _errorText.Text = e.Message;
             }
         }
 
@@ -140,52 +184,69 @@ namespace Xamarin.Android.MobileTracker
 
         private async void OnLocationChanged(Location location)
         {
-            if (location == null)
+            try
             {
-                Console.WriteLine("Unable to determine your location. Try again in a short while.");
+                if (location == null)
+                {
+                    Console.WriteLine("Unable to determine your location. Try again in a short while.");
+                }
+                else
+                {
+                    counter++;
+
+                    _currentLocation = location;
+                    _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" +
+                                         _currentLocation.Longitude;
+
+                    var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+                        ProtocolType.Udp);
+
+                    var serverAddr = IPAddress.Parse("216.187.77.151");
+                    var endPoint = new IPEndPoint(serverAddr, 6066);
+                    var uniqueId = "868498018462694";
+
+                    var now = DateTime.Now;
+                    var year = now.Year.ToString("0000");
+                    var month = now.Month.ToString("00");
+                    var day = now.Day.ToString("00");
+                    var hour = now.Hour.ToString("00");
+                    var minute = now.Minute.ToString("00");
+                    var second = now.Second.ToString("00");
+
+                    var stringTime = year + month + day + hour + minute + second;
+                    var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
+                    var battery = new Battery();
+                    var batteryPest = battery.RemainingChargePercent.ToString();
+
+                    var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
+                                ",0,1111.5,"
+                                + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
+                                + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
+                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928,1192$";
+
+                    sock.SendTo(Encoding.UTF8.GetBytes(xirgo), endPoint);
+
+                    var address = await ReverseGeocodeCurrentLocation();
+                    DisplayAddress(address);
+                }
             }
-            else
+            catch (Exception e)
             {
-                counter++;
-
-                _currentLocation = location;
-                _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" + _currentLocation.Longitude;
-
-                var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
-             ProtocolType.Udp);
-
-                var serverAddr = IPAddress.Parse("216.187.77.151");
-                var endPoint = new IPEndPoint(serverAddr, 6066);
-                var uniqueId = "868498018462694";
-
-                var now = DateTime.Now;
-                var year = now.Year.ToString("0000");
-                var month = now.Month.ToString("00");
-                var day = now.Day.ToString("00");
-                var hour = now.Hour.ToString("00");
-                var minute = now.Minute.ToString("00");
-                var second = now.Second.ToString("00");
-
-                var stringTime = year+month+day+hour+minute+second;
-                var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
-                var battery = new Battery();
-                var batteryPest = battery.RemainingChargePercent.ToString();
-                
-                var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed + ",0,1111.5,"
-                    + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture))  + "," 
-                    + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                    "," + stringTime +",0302,0720,2710,E601,,,,20160504114928,1192$";
-
-                sock.SendTo(Encoding.UTF8.GetBytes(xirgo), endPoint);
-
-                var address = await ReverseGeocodeCurrentLocation();
-                DisplayAddress(address);
+                _errorText.Text = e.Message;
             }
         }
 
-        private static string CommaToDot(string message)
+        private string CommaToDot(string message)
         {
-            return message.Replace(",", ".");
+            try
+            {
+                return message.Replace(",", ".");
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
+            return String.Empty;
         }
     }
 }

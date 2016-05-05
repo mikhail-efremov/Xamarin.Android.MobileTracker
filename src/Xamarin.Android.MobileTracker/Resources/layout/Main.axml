@@ -39,4 +39,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/buttonSend" />
+    <TextView
+        android:text="no error"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textErrorInfo" />
 </LinearLayout>

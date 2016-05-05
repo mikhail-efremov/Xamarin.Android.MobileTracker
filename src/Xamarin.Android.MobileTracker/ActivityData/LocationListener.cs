@@ -1,17 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
 using Android.Locations;
-using Android.Nfc;
 using Android.OS;
-using Android.Runtime;
 using Android.Util;
-using Android.Views;
-using Android.Widget;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
 {
@@ -52,6 +42,11 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public void RequestLocation(long minTime, int minDistance)
         {
             _locationManager.RequestLocationUpdates(LocationManager.GpsProvider, minTime, minDistance, this);
+        }
+
+        public void SingleRequestLocation()
+        {
+            _locationManager.RequestSingleUpdate(LocationManager.GpsProvider, this, Looper.MainLooper);
         }
 
         // removed code for clarity

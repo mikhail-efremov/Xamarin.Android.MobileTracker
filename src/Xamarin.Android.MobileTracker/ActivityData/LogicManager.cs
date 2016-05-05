@@ -1,8 +1,5 @@
 using System;
-using System.IO;
 using Android.Locations;
-using Android.OS;
-using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
 {
@@ -26,7 +23,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void ForceRequestLocation()
         {
-            _locationListener?.RequestLocation(0, 0);
+            _locationListener?.SingleRequestLocation();
         }
 
         public void StopRequestLocation()
