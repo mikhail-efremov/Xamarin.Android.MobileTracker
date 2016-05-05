@@ -168,10 +168,10 @@ namespace Xamarin.Android.MobileTracker
 
                 var stringTime = year+month+day+hour+minute+second;
                 var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
-
-
-
-                var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6,91,4," + speed + ",0,1111.5,"
+                var battery = new Battery();
+                var batteryPest = battery.RemainingChargePercent.ToString();
+                
+                var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed + ",0,1111.5,"
                     + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture))  + "," 
                     + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
                     "," + stringTime +",0302,0720,2710,E601,,,,20160504114928,1192$";
