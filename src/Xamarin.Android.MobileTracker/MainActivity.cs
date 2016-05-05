@@ -248,5 +248,19 @@ namespace Xamarin.Android.MobileTracker
             }
             return String.Empty;
         }
+
+        public void SendNotification(string message, Type openActivityType)
+        {
+            var nMgr = (NotificationManager)GetSystemService(NotificationService);
+            var notification = new Notification(Resource.Drawable.Icon, message);
+            var pendingIntent = PendingIntent.GetActivity(this, 0, new Intent(this, openActivityType), 0);
+            notification.SetLatestEventInfo(this, "Demo Service Notification", message, pendingIntent);
+            nMgr.Notify(0, notification);
+        }
+
+        public void SendToast(string message)
+        {
+            Toast.MakeText(this, message, ToastLength.Long).Show();
+        }
     }
 }
