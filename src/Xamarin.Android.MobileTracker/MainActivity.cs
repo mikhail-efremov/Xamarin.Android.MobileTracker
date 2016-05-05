@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Globalization;
 using Android.App;
 using Android.Widget;
 using Android.OS;
 using Android.Locations;
 using Android.Util;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
@@ -21,6 +24,7 @@ namespace Xamarin.Android.MobileTracker
         private TextView _locationText;
         private OnLocationChanged _onLocationChanged;
         private Location _currentLocation;
+        private LocationManager _locationManager;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -33,22 +37,57 @@ namespace Xamarin.Android.MobileTracker
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
 
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
+            FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
             _logicManager.OnLocationChangedEvent += OnLocationChanged;
+            _locationManager = (LocationManager)GetSystemService(LocationService);
 
-
-            Button callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
+            var callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
             callHistoryButton.Click += (sender, e) =>
             {
                 var intent = new Intent(this, typeof(MapActivity));
-      //          intent.PutStringArrayListExtra("phone_numbers", phoneNumbers);
                 StartActivity(intent);
             };
+        }
+
+        private void OnSendClick(object sender, EventArgs eventArgs)
+        {
+            //port:6066
+            //ip:216.187.77.151 (150)
+            //var xirgo = "+RESP:GTCTN,110107,868498018462694,GL505,0,1,1,8.6,91,4,110.5,0,1111.5,-114.001178,51.222072,20160504114928,0302,0720,2710,E601,,,,20160504114928,1192$";
+            //GTCTN - continuous message
+            //110107 - protocol ver
+            //868498018462694 - uniqueId
+            //GL505 - device name
+            //0 - report id
+            //1 - report type
+            //1 - movement status
+            //8.6 - temperature
+            //91 - battery percentage
+            //4 - gps accuracy
+            //110.5 - speed
+            //0 - azimuth
+            //1111.5 - altitude
+            //-114.001178 - longitude
+            //51.222072 - latitude
+            //20160504114928 - gps UTC time
+            //0302 - mcc
+            //0720 - mnc
+            //2710 - lac
+            //E601 - cellId
+            //, - reserved
+            //, - reserved
+            //, - reserved
+            //20160504114928 - send time
+            //1192 - count num
+            //$ - tail character
+
+            _logicManager.ForceRequestLocation();
         }
 
         protected override void OnResume()
         {
             base.OnResume();
-            _logicManager.StartRequestLocation((LocationManager)GetSystemService(LocationService));
+            _logicManager.StartRequestLocation(_locationManager);
         }
 
         protected override void OnPause()
@@ -97,6 +136,8 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
+        private int counter = 0;
+
         private async void OnLocationChanged(Location location)
         {
             if (location == null)
@@ -105,11 +146,46 @@ namespace Xamarin.Android.MobileTracker
             }
             else
             {
+                counter++;
+
                 _currentLocation = location;
-                _locationText.Text = "Lat:" + _currentLocation.Latitude + " Lon:" + _currentLocation.Longitude;
+                _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" + _currentLocation.Longitude;
+
+                var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+             ProtocolType.Udp);
+
+                var serverAddr = IPAddress.Parse("216.187.77.151");
+                var endPoint = new IPEndPoint(serverAddr, 6066);
+                var uniqueId = "868498018462694";
+
+                var now = DateTime.Now;
+                var year = now.Year.ToString("0000");
+                var month = now.Month.ToString("00");
+                var day = now.Day.ToString("00");
+                var hour = now.Hour.ToString("00");
+                var minute = now.Minute.ToString("00");
+                var second = now.Second.ToString("00");
+
+                var stringTime = year+month+day+hour+minute+second;
+                var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
+
+
+
+                var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6,91,4," + speed + ",0,1111.5,"
+                    + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture))  + "," 
+                    + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
+                    "," + stringTime +",0302,0720,2710,E601,,,,20160504114928,1192$";
+
+                sock.SendTo(Encoding.UTF8.GetBytes(xirgo), endPoint);
+
                 var address = await ReverseGeocodeCurrentLocation();
                 DisplayAddress(address);
             }
+        }
+
+        private static string CommaToDot(string message)
+        {
+            return message.Replace(",", ".");
         }
     }
 }

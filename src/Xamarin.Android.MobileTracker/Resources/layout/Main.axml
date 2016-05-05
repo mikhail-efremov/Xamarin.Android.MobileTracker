@@ -34,4 +34,9 @@
         android:layout_height="wrap_content"
         android:id="@+id/CallMapButton"
         android:enabled="true" />
+    <Button
+        android:text="Force get possition"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonSend" />
 </LinearLayout>

@@ -24,6 +24,11 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             _locationListener.RequestLocation(_configuration.MinTime, _configuration.MinDistance);
         }
 
+        public void ForceRequestLocation()
+        {
+            _locationListener?.RequestLocation(0, 0);
+        }
+
         public void StopRequestLocation()
         {
             _locationListener.Stop();
