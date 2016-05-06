@@ -37,6 +37,14 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
         }
 
+        public void ForceRequestLocation()
+        {
+            if (isSubscribed)
+            {
+                _locationListener?.SingleRequestLocation();
+            }
+        }
+
         public void StopRequestLocation()
         {
             _locationListener.Stop();

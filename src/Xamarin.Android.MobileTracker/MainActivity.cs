@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Globalization;
 using Android.App;
 using Android.Widget;
 using Android.OS;
 using Android.Locations;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
@@ -24,8 +21,9 @@ namespace Xamarin.Android.MobileTracker
         private OnLocationChanged _onLocationChanged;
         private Location _currentLocation;
 
-        LocationService.DemoServiceBinder binder;
-        DemoServiceConnection ServiceConnection;
+        LocationService.DemoServiceBinder _binder;
+        DemoServiceConnection _serviceConnection;
+        private static bool _isBinding = false;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -49,21 +47,28 @@ namespace Xamarin.Android.MobileTracker
             var buttonStart = FindViewById<Button>(Resource.Id.startService);
             buttonStart.Click += (sender, args) =>
             {
-                ServiceConnection = new DemoServiceConnection(this);
-                ApplicationContext.BindService(new Intent(this, typeof(LocationService)), ServiceConnection, Bind.AutoCreate);
-            //    StartService(new Intent(this, typeof(LocationService)));
+                _serviceConnection = new DemoServiceConnection(this);
+                ApplicationContext.BindService(new Intent(this, typeof(LocationService)), _serviceConnection, Bind.AutoCreate);
+
+//                if (_serviceConnection != null)
+//                    _binder = _serviceConnection.Binder;
             };
 
             var buttonStop = FindViewById<Button>(Resource.Id.stopService);
-            buttonStop.Click += (sender, args) => { StopService(new Intent(this, typeof(LocationService))); };
+            buttonStop.Click += (sender, args) =>
+            {
+                ApplicationContext.StopService(new Intent(this, typeof (LocationService)));
+                ApplicationContext.UnbindService(_serviceConnection);
+                StopService(new Intent(this, typeof(LocationService)));
+            };
             
             // restore from connection there was a configuration change, such as a device rotation
-            ServiceConnection = LastNonConfigurationInstance as DemoServiceConnection;
-
-            if (ServiceConnection != null)
-                binder = ServiceConnection.Binder;
+#pragma warning disable 618
+            _serviceConnection = LastNonConfigurationInstance as DemoServiceConnection;
+#pragma warning restore 618
         }
 
+        /*
         // return the service connection if there is a configuration change
         [Obsolete("deprecated")]//??
         public override Java.Lang.Object OnRetainNonConfigurationInstance()
@@ -72,45 +77,24 @@ namespace Xamarin.Android.MobileTracker
             
             return ServiceConnection;
         }
+        */
 
-        private static bool isBinding = false;
+        public void Subscribe()
+        {
+            if (!_binder.GetDemoService().IsStarted)
+                _binder.GetDemoService().StartService(new Intent(this, typeof(LocationService)));
+            if (!_isBinding)
+            {
+                _isBinding = true;
+                _binder.GetDemoService().LogicManager.OnLocationChangedEvent += OnLocationChanged;
+            }
+        }
+
         private void OnSendClick(object sender, EventArgs eventArgs)
         {
             try
             {
-                if(!binder.GetDemoService().IsStarted)
-                    binder.GetDemoService().StartService(new Intent(this, typeof (LocationService)));
-                binder.GetDemoService().SendToast("OGO EBAT`");
-                if (!isBinding)
-                {
-                    isBinding = true;
-                    binder.GetDemoService().LogicManager.OnLocationChangedEvent += OnLocationChanged;
-                }
-   //             binder.GetDemoService().LogicManager.ForceRequestLocation();
-            }
-            catch (Exception e)
-            {
-                _errorText.Text = e.Message;
-            }
-        }
-
-        protected override void OnResume()
-        {
-            try
-            {
-                base.OnResume();
-            }
-            catch (Exception e)
-            {
-                _errorText.Text = e.Message;
-            }
-        }
-
-        protected override void OnPause()
-        {
-            try
-            {
-                base.OnPause();
+                _binder.GetDemoService().LogicManager.ForceRequestLocation();
             }
             catch (Exception e)
             {
@@ -180,46 +164,49 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
-        private int counter = 0;
+        private int _counter;
         private async void OnLocationChanged(Location location)
         {
-            counter++;
+            _counter++;
             _currentLocation = location;
-            _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" +  _currentLocation.Longitude;
+            _locationText.Text = _counter + "Lat:" + _currentLocation.Latitude + " Lon:" +  _currentLocation.Longitude;
             var address = await ReverseGeocodeCurrentLocation();
             DisplayAddress(address);
         }
 
-        public void SendNotification(string message, Type openActivityType)
+        protected override void OnResume()
         {
-            var nMgr = (NotificationManager)GetSystemService(NotificationService);
-            var notification = new Notification(Resource.Drawable.Icon, message);
-            var pendingIntent = PendingIntent.GetActivity(this, 0, new Intent(this, openActivityType), 0);
-            notification.SetLatestEventInfo(this, "Demo Service Notification", message, pendingIntent);
-            nMgr.Notify(0, notification);
+            try
+            {
+                base.OnResume();
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
-        public void SendToast(string message)
+        protected override void OnPause()
         {
-            Toast.MakeText(this, message, ToastLength.Long).Show();
+            try
+            {
+                base.OnPause();
+            }
+            catch (Exception e)
+            {
+                _errorText.Text = e.Message;
+            }
         }
 
-        class DemoServiceConnection : Java.Lang.Object, IServiceConnection
+        private class DemoServiceConnection : Java.Lang.Object, IServiceConnection
         {
             private MainActivity Activity { get; }
-            LocationService.DemoServiceBinder binder;
 
-            public LocationService.DemoServiceBinder Binder
-            {
-                get
-                {
-                    return binder;
-                }
-            }
+            public LocationService.DemoServiceBinder Binder { get; private set; }
 
             public DemoServiceConnection(MainActivity activity)
             {
-                this.Activity = activity;
+                Activity = activity;
             }
 
             public void OnServiceConnected(ComponentName name, IBinder service)
@@ -227,18 +214,19 @@ namespace Xamarin.Android.MobileTracker
                 var demoServiceBinder = service as LocationService.DemoServiceBinder;
                 if (demoServiceBinder != null)
                 {
-                    var binder = (LocationService.DemoServiceBinder)service;
-                    Activity.binder = binder;
+                    Binder = (LocationService.DemoServiceBinder)service;
+                    Activity._binder = Binder;
                     
                     // keep instance for preservation across configuration changes
-                    this.binder = (LocationService.DemoServiceBinder)service;
-                    binder.GetDemoService().Initialize();
+                    Binder = (LocationService.DemoServiceBinder)service;
+                    Binder.GetDemoService().Initialize();
+                    Activity.Subscribe();
                 }
             }
 
             public void OnServiceDisconnected(ComponentName name)
             {
-                binder.Dispose();
+                Binder.Dispose();
             }
         }
     }

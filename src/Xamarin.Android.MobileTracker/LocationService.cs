@@ -17,7 +17,7 @@ namespace Xamarin.Android.MobileTracker
     [Service]
     public class LocationService : Service
     {
-        public static readonly int TimerWait = 30000;
+        public static readonly int TimerWait = 50000;
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
 
         public bool IsStarted { get; private set; }
@@ -27,7 +27,7 @@ namespace Xamarin.Android.MobileTracker
         private string _errorText;
         private LocationManager _locationManager;
 
-        DemoServiceBinder binder;
+        DemoServiceBinder _binder;
 
         [Obsolete("deprecated")]
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
@@ -36,15 +36,7 @@ namespace Xamarin.Android.MobileTracker
             
             SendToast("Service was started");
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
-            Timer = new Timer(o =>
-            {
-                LogicManager.ForceRequestLocation(_locationManager);
-            },
-                               null,
-                               0,
-                               TimerWait);
-
-         //   LogicManager.StartRequestLocation(_locationManager);
+            Timer = new Timer(o => LogicManager.ForceRequestLocation(_locationManager), null, 0, TimerWait);
 
             return StartCommandResult.Sticky;
         }
@@ -58,8 +50,7 @@ namespace Xamarin.Android.MobileTracker
             _locationManager = (LocationManager)GetSystemService(LocationService);
             SendToast("Service was initialized");
         }
-
-        private int counter = 0;
+        
         private void OnLocationChanged(Location location)
         {
             try
@@ -70,8 +61,6 @@ namespace Xamarin.Android.MobileTracker
                 }
                 else
                 {
-                    counter++;
-
                     _currentLocation = location;
 
                     var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
@@ -120,7 +109,7 @@ namespace Xamarin.Android.MobileTracker
             {
                 _errorText = e.Message;
             }
-            return String.Empty;
+            return string.Empty;
         }
 
         public override void OnDestroy()
@@ -137,8 +126,8 @@ namespace Xamarin.Android.MobileTracker
 
         public override IBinder OnBind(Intent intent)
         {
-            binder = new DemoServiceBinder(this);
-            return binder;
+            _binder = new DemoServiceBinder(this);
+            return _binder;
         }
 
         public void SendToast(string message)
@@ -148,16 +137,16 @@ namespace Xamarin.Android.MobileTracker
 
         public class DemoServiceBinder : Binder
         {
-            LocationService service;
+            readonly LocationService _service;
 
             public DemoServiceBinder(LocationService service)
             {
-                this.service = service;
+                _service = service;
             }
 
             public LocationService GetDemoService()
             {
-                return service;
+                return _service;
             }
         }
     }
