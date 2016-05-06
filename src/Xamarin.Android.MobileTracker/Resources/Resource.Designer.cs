@@ -66,8 +66,8 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f050002
 			public const int address_text = 2131034114;
 			
-			// aapt resource value: 0x7f050006
-			public const int analogClock1 = 2131034118;
+			// aapt resource value: 0x7f050008
+			public const int analogClock1 = 2131034120;
 			
 			// aapt resource value: 0x7f050004
 			public const int buttonSend = 2131034116;
@@ -77,6 +77,12 @@ namespace Xamarin.Android.MobileTracker
 			
 			// aapt resource value: 0x7f050000
 			public const int location_text = 2131034112;
+			
+			// aapt resource value: 0x7f050006
+			public const int startService = 2131034118;
+			
+			// aapt resource value: 0x7f050007
+			public const int stopService = 2131034119;
 			
 			// aapt resource value: 0x7f050005
 			public const int textErrorInfo = 2131034117;

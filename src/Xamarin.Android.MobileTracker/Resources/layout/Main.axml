@@ -45,4 +45,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textErrorInfo" />
+    <Button
+        android:text="Start service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/startService" />
+    <Button
+        android:text="Stop service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/stopService" />
 </LinearLayout>

@@ -4,7 +4,6 @@ using Android.App;
 using Android.Widget;
 using Android.OS;
 using Android.Locations;
-using Android.Util;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -30,7 +29,6 @@ namespace Xamarin.Android.MobileTracker
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-            // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
             _logicManager = new LogicManager();
@@ -49,6 +47,12 @@ namespace Xamarin.Android.MobileTracker
                 var intent = new Intent(this, typeof(MapActivity));
                 StartActivity(intent);
             };
+
+            var buttonStart = FindViewById<Button>(Resource.Id.startService);
+            buttonStart.Click += (sender, args) => { StartService(new Intent(this, typeof(LocationService))); };
+
+            var buttonStop = FindViewById<Button>(Resource.Id.stopService);
+            buttonStop.Click += (sender, args) => { StopService(new Intent(this, typeof(LocationService))); };
         }
 
         private void OnSendClick(object sender, EventArgs eventArgs)
@@ -203,8 +207,9 @@ namespace Xamarin.Android.MobileTracker
 
                     var serverAddr = IPAddress.Parse("216.187.77.151");
                     var endPoint = new IPEndPoint(serverAddr, 6066);
+                    
                     var uniqueId = "868498018462694";
-
+                    
                     var now = DateTime.Now;
                     var year = now.Year.ToString("0000");
                     var month = now.Month.ToString("00");
