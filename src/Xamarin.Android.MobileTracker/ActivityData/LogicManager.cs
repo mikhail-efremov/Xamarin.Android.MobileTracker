@@ -8,6 +8,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public OnLocationChanged OnLocationChangedEvent;
         private LocationListener _locationListener;
         private Configuration _configuration;
+        private static bool isSubscribed = false;
 
         public LogicManager()
         {
@@ -21,9 +22,19 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             _locationListener.RequestLocation(_configuration.MinTime, _configuration.MinDistance);
         }
 
-        public void ForceRequestLocation()
+        public void ForceRequestLocation(LocationManager locationManager)
         {
-            _locationListener?.SingleRequestLocation();
+            if (isSubscribed)
+            {
+                _locationListener?.SingleRequestLocation();
+            }
+            else
+            {
+                _locationListener = new LocationListener(locationManager);
+                _locationListener.OnLocationChangedEvent += OnLocationChanged;
+                _locationListener?.SingleRequestLocation();
+                isSubscribed = true;
+            }
         }
 
         public void StopRequestLocation()

@@ -1,0 +1,29 @@
+﻿            //port:6066
+            //ip:216.187.77.151 (150)
+            //var xirgo = "+RESP:GTCTN,110107,868498018462694,GL505,0,1,1,8.6,91,4,110.5,0,1111.5,-114.001178,51.222072,20160504114928,0302,0720,2710,E601,,,,20160504114928,1192$";
+            //GTCTN - continuous message
+            //110107 - protocol ver
+            //868498018462694 - uniqueId
+            //GL505 - device name
+            //0 - report id
+            //1 - report type
+            //1 - movement status
+            //8.6 - temperature
+            //91 - battery percentage
+            //4 - gps accuracy
+            //110.5 - speed
+            //0 - azimuth
+            //1111.5 - altitude
+            //-114.001178 - longitude
+            //51.222072 - latitude
+            //20160504114928 - gps UTC time
+            //0302 - mcc
+            //0720 - mnc
+            //2710 - lac
+            //E601 - cellId
+            //, - reserved
+            //, - reserved
+            //, - reserved
+            //20160504114928 - send time
+            //1192 - count num
+            //$ - tail character

@@ -19,27 +19,25 @@ namespace Xamarin.Android.MobileTracker
     {
         public static readonly string Tag = "X:" + typeof(MainActivity).Name;
         private TextView _addressText;
-        private LogicManager _logicManager;
         private TextView _locationText;
         private TextView _errorText;
         private OnLocationChanged _onLocationChanged;
         private Location _currentLocation;
-        private LocationManager _locationManager;
+
+        LocationService.DemoServiceBinder binder;
+        DemoServiceConnection ServiceConnection;
 
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
             SetContentView(Resource.Layout.Main);
 
-            _logicManager = new LogicManager();
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
             _errorText = FindViewById<TextView>(Resource.Id.textErrorInfo);
 
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
-            _logicManager.OnLocationChangedEvent += OnLocationChanged;
-            _locationManager = (LocationManager)GetSystemService(LocationService);
 
             var callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
             callHistoryButton.Click += (sender, e) =>
@@ -49,46 +47,46 @@ namespace Xamarin.Android.MobileTracker
             };
 
             var buttonStart = FindViewById<Button>(Resource.Id.startService);
-            buttonStart.Click += (sender, args) => { StartService(new Intent(this, typeof(LocationService))); };
+            buttonStart.Click += (sender, args) =>
+            {
+                ServiceConnection = new DemoServiceConnection(this);
+                ApplicationContext.BindService(new Intent(this, typeof(LocationService)), ServiceConnection, Bind.AutoCreate);
+            //    StartService(new Intent(this, typeof(LocationService)));
+            };
 
             var buttonStop = FindViewById<Button>(Resource.Id.stopService);
             buttonStop.Click += (sender, args) => { StopService(new Intent(this, typeof(LocationService))); };
+            
+            // restore from connection there was a configuration change, such as a device rotation
+            ServiceConnection = LastNonConfigurationInstance as DemoServiceConnection;
+
+            if (ServiceConnection != null)
+                binder = ServiceConnection.Binder;
         }
 
+        // return the service connection if there is a configuration change
+        [Obsolete("deprecated")]//??
+        public override Java.Lang.Object OnRetainNonConfigurationInstance()
+        {
+            base.OnRetainNonConfigurationInstance();
+            
+            return ServiceConnection;
+        }
+
+        private static bool isBinding = false;
         private void OnSendClick(object sender, EventArgs eventArgs)
         {
-            //port:6066
-            //ip:216.187.77.151 (150)
-            //var xirgo = "+RESP:GTCTN,110107,868498018462694,GL505,0,1,1,8.6,91,4,110.5,0,1111.5,-114.001178,51.222072,20160504114928,0302,0720,2710,E601,,,,20160504114928,1192$";
-            //GTCTN - continuous message
-            //110107 - protocol ver
-            //868498018462694 - uniqueId
-            //GL505 - device name
-            //0 - report id
-            //1 - report type
-            //1 - movement status
-            //8.6 - temperature
-            //91 - battery percentage
-            //4 - gps accuracy
-            //110.5 - speed
-            //0 - azimuth
-            //1111.5 - altitude
-            //-114.001178 - longitude
-            //51.222072 - latitude
-            //20160504114928 - gps UTC time
-            //0302 - mcc
-            //0720 - mnc
-            //2710 - lac
-            //E601 - cellId
-            //, - reserved
-            //, - reserved
-            //, - reserved
-            //20160504114928 - send time
-            //1192 - count num
-            //$ - tail character
             try
             {
-                _logicManager.ForceRequestLocation();
+                if(!binder.GetDemoService().IsStarted)
+                    binder.GetDemoService().StartService(new Intent(this, typeof (LocationService)));
+                binder.GetDemoService().SendToast("OGO EBAT`");
+                if (!isBinding)
+                {
+                    isBinding = true;
+                    binder.GetDemoService().LogicManager.OnLocationChangedEvent += OnLocationChanged;
+                }
+   //             binder.GetDemoService().LogicManager.ForceRequestLocation();
             }
             catch (Exception e)
             {
@@ -101,7 +99,6 @@ namespace Xamarin.Android.MobileTracker
             try
             {
                 base.OnResume();
-                _logicManager.StartRequestLocation(_locationManager);
             }
             catch (Exception e)
             {
@@ -114,7 +111,6 @@ namespace Xamarin.Android.MobileTracker
             try
             {
                 base.OnPause();
-                _logicManager.StopRequestLocation();
             }
             catch (Exception e)
             {
@@ -185,73 +181,13 @@ namespace Xamarin.Android.MobileTracker
         }
 
         private int counter = 0;
-
         private async void OnLocationChanged(Location location)
         {
-            try
-            {
-                if (location == null)
-                {
-                    Console.WriteLine("Unable to determine your location. Try again in a short while.");
-                }
-                else
-                {
-                    counter++;
-
-                    _currentLocation = location;
-                    _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" +
-                                         _currentLocation.Longitude;
-
-                    var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
-                        ProtocolType.Udp);
-
-                    var serverAddr = IPAddress.Parse("216.187.77.151");
-                    var endPoint = new IPEndPoint(serverAddr, 6066);
-                    
-                    var uniqueId = "868498018462694";
-                    
-                    var now = DateTime.Now;
-                    var year = now.Year.ToString("0000");
-                    var month = now.Month.ToString("00");
-                    var day = now.Day.ToString("00");
-                    var hour = now.Hour.ToString("00");
-                    var minute = now.Minute.ToString("00");
-                    var second = now.Second.ToString("00");
-
-                    var stringTime = year + month + day + hour + minute + second;
-                    var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
-                    var battery = new Battery();
-                    var batteryPest = battery.RemainingChargePercent.ToString();
-
-                    var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
-                                ",0,1111.5,"
-                                + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
-                                + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928,1192$";
-
-                    sock.SendTo(Encoding.UTF8.GetBytes(xirgo), endPoint);
-
-                    var address = await ReverseGeocodeCurrentLocation();
-                    DisplayAddress(address);
-                }
-            }
-            catch (Exception e)
-            {
-                _errorText.Text = e.Message;
-            }
-        }
-
-        private string CommaToDot(string message)
-        {
-            try
-            {
-                return message.Replace(",", ".");
-            }
-            catch (Exception e)
-            {
-                _errorText.Text = e.Message;
-            }
-            return String.Empty;
+            counter++;
+            _currentLocation = location;
+            _locationText.Text = counter + "Lat:" + _currentLocation.Latitude + " Lon:" +  _currentLocation.Longitude;
+            var address = await ReverseGeocodeCurrentLocation();
+            DisplayAddress(address);
         }
 
         public void SendNotification(string message, Type openActivityType)
@@ -266,6 +202,44 @@ namespace Xamarin.Android.MobileTracker
         public void SendToast(string message)
         {
             Toast.MakeText(this, message, ToastLength.Long).Show();
+        }
+
+        class DemoServiceConnection : Java.Lang.Object, IServiceConnection
+        {
+            private MainActivity Activity { get; }
+            LocationService.DemoServiceBinder binder;
+
+            public LocationService.DemoServiceBinder Binder
+            {
+                get
+                {
+                    return binder;
+                }
+            }
+
+            public DemoServiceConnection(MainActivity activity)
+            {
+                this.Activity = activity;
+            }
+
+            public void OnServiceConnected(ComponentName name, IBinder service)
+            {
+                var demoServiceBinder = service as LocationService.DemoServiceBinder;
+                if (demoServiceBinder != null)
+                {
+                    var binder = (LocationService.DemoServiceBinder)service;
+                    Activity.binder = binder;
+                    
+                    // keep instance for preservation across configuration changes
+                    this.binder = (LocationService.DemoServiceBinder)service;
+                    binder.GetDemoService().Initialize();
+                }
+            }
+
+            public void OnServiceDisconnected(ComponentName name)
+            {
+                binder.Dispose();
+            }
         }
     }
 }
