@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using Android.Gestures;
 using Android.Locations;
 using SQLite;
 
@@ -24,7 +23,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public string Provider { get; set; }
         public float Speed { get; set; }
         public long Time { get; set; }
-        public long Ack { get; set; }
+        public int Ack { get; set; }
+        public bool Acked { get; set; }
 
         public Point(Location location)
         {
@@ -49,16 +49,27 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public int SaveInBase()
         {
+            Ack = GetGreatestAck() + 1;
             var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
             var db = new SQLiteConnection(dbPath);
             
             db.CreateTable<Point>();
             db.Insert(this);
 
-//            var point = db.Get<Point>(1);
-//            var pointList = db.Table<Point>();
-
             return 1;
+        }
+
+        public static int GetGreatestAck()
+        {
+            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+
+            db.CreateTable<Point>();
+
+            var greatestAck = db.Table<Point>()
+                .OrderByDescending(point => point.Ack).First().Ack;
+
+            return greatestAck;
         }
 
         public override string ToString()

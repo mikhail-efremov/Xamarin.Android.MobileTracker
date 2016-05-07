@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
-using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -18,7 +17,6 @@ namespace Xamarin.Android.MobileTracker
         private TextView _addressText;
         private TextView _locationText;
         private TextView _errorText;
-        private OnLocationChanged _onLocationChanged;
         private Location _currentLocation;
 
         LocationService.DemoServiceBinder _binder;
@@ -37,47 +35,32 @@ namespace Xamarin.Android.MobileTracker
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
 
+            var statusText = FindViewById<TextView>(Resource.Id.textServiceStatus);
+            var s = FindViewById<Switch>(Resource.Id.switchService);
+            s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
+                if (e.IsChecked)
+                {
+                    statusText.Text = "Service is on";
+                    _serviceConnection = new DemoServiceConnection(this);
+                    ApplicationContext.BindService(new Intent(this, typeof(LocationService)), _serviceConnection, Bind.AutoCreate);
+                }
+                else
+                {
+                    statusText.Text = "Service is off";
+                    ApplicationContext.StopService(new Intent(this, typeof(LocationService)));
+                    ApplicationContext.UnbindService(_serviceConnection);
+                    StopService(new Intent(this, typeof(LocationService)));
+                }
+            };
+            
             var callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
             callHistoryButton.Click += (sender, e) =>
             {
                 var intent = new Intent(this, typeof(MapActivity));
                 StartActivity(intent);
             };
-
-            var buttonStart = FindViewById<Button>(Resource.Id.startService);
-            buttonStart.Click += (sender, args) =>
-            {
-                _serviceConnection = new DemoServiceConnection(this);
-                ApplicationContext.BindService(new Intent(this, typeof(LocationService)), _serviceConnection, Bind.AutoCreate);
-
-//                if (_serviceConnection != null)
-//                    _binder = _serviceConnection.Binder;
-            };
-
-            var buttonStop = FindViewById<Button>(Resource.Id.stopService);
-            buttonStop.Click += (sender, args) =>
-            {
-                ApplicationContext.StopService(new Intent(this, typeof (LocationService)));
-                ApplicationContext.UnbindService(_serviceConnection);
-                StopService(new Intent(this, typeof(LocationService)));
-            };
-            
-            // restore from connection there was a configuration change, such as a device rotation
-#pragma warning disable 618
-            _serviceConnection = LastNonConfigurationInstance as DemoServiceConnection;
-#pragma warning restore 618
+ //           _serviceConnection = LastNonConfigurationInstance as DemoServiceConnection;
         }
-
-        /*
-        // return the service connection if there is a configuration change
-        [Obsolete("deprecated")]//??
-        public override Java.Lang.Object OnRetainNonConfigurationInstance()
-        {
-            base.OnRetainNonConfigurationInstance();
-            
-            return ServiceConnection;
-        }
-        */
 
         public void Subscribe()
         {
@@ -150,7 +133,6 @@ namespace Xamarin.Android.MobileTracker
                     {
                         deviceAddress.AppendLine(address.GetAddressLine(i));
                     }
-                    // Remove the last comma from the end of the address.
                     _addressText.Text = deviceAddress.ToString();
                 }
                 else
@@ -202,7 +184,7 @@ namespace Xamarin.Android.MobileTracker
         {
             private MainActivity Activity { get; }
 
-            public LocationService.DemoServiceBinder Binder { get; private set; }
+            private LocationService.DemoServiceBinder Binder { get; set; }
 
             public DemoServiceConnection(MainActivity activity)
             {

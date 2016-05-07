@@ -1,9 +1,6 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using Android.App;
 using Android.Content;
@@ -47,36 +44,19 @@ namespace Xamarin.Android.MobileTracker
 
         public void Initialize()
         {
-
-//            GetLastAck();
-
-
-
-
-
-
-
             IsStarted = false;
             LogicManager = new LogicManager();
             LogicManager.OnLocationChangedEvent += OnLocationChanged;
 
             udpServer = new UdpServer("216.187.77.151", 6066);
-            udpServer.OnReceivePacket += (sender, packet) =>
-            {
-                Console.WriteLine(sender.Port);
-            };
             udpServer.OnAckReceive += ack =>
             {
-                Console.WriteLine(ack);
-
                 var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
                 var db = new SQLiteConnection(dbPath);
 
-                db.CreateTable<Point>();
-                db.Insert(this);
-
-                var point = db.Get<Point>(1);
-                var pointList = db.Table<Point>();                
+                var point = db.Get<Point>(p => p.Ack == ack);
+                point.Acked = true;
+                db.Update(point);          
             };
 
             _locationManager = (LocationManager)GetSystemService(LocationService);
@@ -107,13 +87,13 @@ namespace Xamarin.Android.MobileTracker
                     var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
                     var battery = new Battery();
                     var batteryPest = battery.RemainingChargePercent.ToString();
-                    var ack = 0;
+                    var ack = Point.GetGreatestAck();
 
                     var xirgo = "+RESP:GTCTN,110107," + UniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
                                 ",0,1111.5,"
                                 + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
                                 + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928," + ack +"$";
+                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928," + ack + "$";
 
                     udpServer.Send(xirgo);
                 }
@@ -124,33 +104,9 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
-        private int GetLastAck()
-        {
-            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
-            var db = new SQLiteConnection(dbPath);
-
-            db.CreateTable<Point>();
-            
-            var query = db.Table<Point>().Where(v => Math.Abs(v.Speed) < 5);
-
-            foreach (var stock in query)
-                Console.WriteLine("Stock: " + stock.Accuracy);
-            
-            var pointList = db.Table<Point>();
-            return 00;
-        }
-
         private string CommaToDot(string message)
         {
-            try
-            {
-                return message.Replace(",", ".");
-            }
-            catch (Exception e)
-            {
-                _errorText = e.Message;
-            }
-            return string.Empty;
+            return message.Replace(",", ".");
         }
 
         public override void OnDestroy()

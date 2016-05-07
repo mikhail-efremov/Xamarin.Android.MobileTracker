@@ -58,9 +58,9 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
             else
             {
-                OnLocationChangedEvent(location);
                 var point = new Point(location);
                 point.SaveInBase();
+                OnLocationChangedEvent(location);
             }
         }
     }

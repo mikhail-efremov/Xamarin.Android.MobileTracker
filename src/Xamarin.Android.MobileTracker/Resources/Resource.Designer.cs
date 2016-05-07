@@ -78,14 +78,14 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f050000
 			public const int location_text = 2131034112;
 			
-			// aapt resource value: 0x7f050006
-			public const int startService = 2131034118;
-			
 			// aapt resource value: 0x7f050007
-			public const int stopService = 2131034119;
+			public const int switchService = 2131034119;
 			
 			// aapt resource value: 0x7f050005
 			public const int textErrorInfo = 2131034117;
+			
+			// aapt resource value: 0x7f050006
+			public const int textServiceStatus = 2131034118;
 			
 			static Id()
 			{
