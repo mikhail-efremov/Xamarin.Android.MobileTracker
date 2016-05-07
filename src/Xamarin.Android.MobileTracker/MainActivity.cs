@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Android.App;
 using Android.Widget;
 using Android.OS;
@@ -7,6 +8,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
+using SQLite;
+using Xamarin.Android.MobileTracker.ActivityData;
+using Environment = System.Environment;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -27,6 +31,10 @@ namespace Xamarin.Android.MobileTracker
         {
             base.OnCreate(bundle);
             SetContentView(Resource.Layout.Main);
+
+            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            db.DropTable<Point>();
 
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
