@@ -24,6 +24,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public string Provider { get; set; }
         public float Speed { get; set; }
         public long Time { get; set; }
+        public long Ack { get; set; }
 
         public Point(Location location)
         {
@@ -54,8 +55,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             db.CreateTable<Point>();
             db.Insert(this);
 
-            var point = db.Get<Point>(1);
-            var pointList = db.Table<Point>();
+//            var point = db.Get<Point>(1);
+//            var pointList = db.Table<Point>();
 
             return 1;
         }

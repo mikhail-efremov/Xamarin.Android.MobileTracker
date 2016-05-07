@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -11,6 +12,8 @@ using Android.Util;
 using Android.Widget;
 using Xamarin.Android.MobileTracker.ActivityData;
 using Android.Locations;
+using SQLite;
+using Environment = System.Environment;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -19,15 +22,16 @@ namespace Xamarin.Android.MobileTracker
     {
         public static readonly int TimerWait = 50000;
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
-
+        
         public bool IsStarted { get; private set; }
         public Timer Timer { get; private set; }
         public LogicManager LogicManager;
+        private const string UniqueId = "868498018462694";
         private Location _currentLocation;
         private string _errorText;
         private LocationManager _locationManager;
-
-        DemoServiceBinder _binder;
+        private DemoServiceBinder _binder;
+        private UdpServer udpServer;
 
         [Obsolete("deprecated")]
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
@@ -43,9 +47,37 @@ namespace Xamarin.Android.MobileTracker
 
         public void Initialize()
         {
+
+//            GetLastAck();
+
+
+
+
+
+
+
             IsStarted = false;
             LogicManager = new LogicManager();
             LogicManager.OnLocationChangedEvent += OnLocationChanged;
+
+            udpServer = new UdpServer("216.187.77.151", 6066);
+            udpServer.OnReceivePacket += (sender, packet) =>
+            {
+                Console.WriteLine(sender.Port);
+            };
+            udpServer.OnAckReceive += ack =>
+            {
+                Console.WriteLine(ack);
+
+                var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+                var db = new SQLiteConnection(dbPath);
+
+                db.CreateTable<Point>();
+                db.Insert(this);
+
+                var point = db.Get<Point>(1);
+                var pointList = db.Table<Point>();                
+            };
 
             _locationManager = (LocationManager)GetSystemService(LocationService);
             SendToast("Service was initialized");
@@ -62,15 +94,7 @@ namespace Xamarin.Android.MobileTracker
                 else
                 {
                     _currentLocation = location;
-
-                    var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
-                        ProtocolType.Udp);
-
-                    var serverAddr = IPAddress.Parse("216.187.77.151");
-                    var endPoint = new IPEndPoint(serverAddr, 6066);
-
-                    var uniqueId = "868498018462694";
-
+                    
                     var now = DateTime.Now;
                     var year = now.Year.ToString("0000");
                     var month = now.Month.ToString("00");
@@ -83,20 +107,37 @@ namespace Xamarin.Android.MobileTracker
                     var speed = _currentLocation.Speed.ToString(CultureInfo.InvariantCulture);
                     var battery = new Battery();
                     var batteryPest = battery.RemainingChargePercent.ToString();
+                    var ack = 0;
 
-                    var xirgo = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
+                    var xirgo = "+RESP:GTCTN,110107," + UniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
                                 ",0,1111.5,"
                                 + CommaToDot(_currentLocation.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
                                 + CommaToDot(_currentLocation.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928,1192$";
+                                "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928," + ack +"$";
 
-                    sock.SendTo(Encoding.UTF8.GetBytes(xirgo), endPoint);
+                    udpServer.Send(xirgo);
                 }
             }
             catch (Exception e)
             {
                 _errorText = e.Message;
             }
+        }
+
+        private int GetLastAck()
+        {
+            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+
+            db.CreateTable<Point>();
+            
+            var query = db.Table<Point>().Where(v => Math.Abs(v.Speed) < 5);
+
+            foreach (var stock in query)
+                Console.WriteLine("Stock: " + stock.Accuracy);
+            
+            var pointList = db.Table<Point>();
+            return 00;
         }
 
         private string CommaToDot(string message)
