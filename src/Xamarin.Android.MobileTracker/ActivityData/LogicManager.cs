@@ -83,6 +83,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
             else
             {
+                OnLocationChangedEvent(location);
                 var point = new Point(UniqueId, location);
                 point.SaveInBase();
                 _udpServer.Send(point.Message);
