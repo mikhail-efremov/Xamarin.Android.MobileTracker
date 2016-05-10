@@ -23,7 +23,7 @@ namespace Xamarin.Android.MobileTracker
         private TextView _errorText;
         private Location _currentLocation;
 
-        LocationService.DemoServiceBinder _binder;
+        LocationService.LocationServiceBinder _binder;
         DemoServiceConnection _serviceConnection;
         private static bool _isBinding = false;
 
@@ -192,7 +192,7 @@ namespace Xamarin.Android.MobileTracker
         {
             private MainActivity Activity { get; }
 
-            private LocationService.DemoServiceBinder Binder { get; set; }
+            private LocationService.LocationServiceBinder Binder { get; set; }
 
             public DemoServiceConnection(MainActivity activity)
             {
@@ -201,14 +201,14 @@ namespace Xamarin.Android.MobileTracker
 
             public void OnServiceConnected(ComponentName name, IBinder service)
             {
-                var demoServiceBinder = service as LocationService.DemoServiceBinder;
+                var demoServiceBinder = service as LocationService.LocationServiceBinder;
                 if (demoServiceBinder != null)
                 {
-                    Binder = (LocationService.DemoServiceBinder)service;
+                    Binder = (LocationService.LocationServiceBinder)service;
                     Activity._binder = Binder;
                     
                     // keep instance for preservation across configuration changes
-                    Binder = (LocationService.DemoServiceBinder)service;
+                    Binder = (LocationService.LocationServiceBinder)service;
                     Binder.GetDemoService().Initialize();
                     Activity.Subscribe();
                 }
