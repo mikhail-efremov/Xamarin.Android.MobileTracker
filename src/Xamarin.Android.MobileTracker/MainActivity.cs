@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Android.App;
 using Android.Widget;
@@ -8,9 +9,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
+using Android.Telephony;
 using SQLite;
 using Xamarin.Android.MobileTracker.ActivityData;
 using Environment = System.Environment;
+using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -22,24 +25,21 @@ namespace Xamarin.Android.MobileTracker
         private TextView _locationText;
         private TextView _errorText;
         private Location _currentLocation;
-
+        
         LocationService.LocationServiceBinder _binder;
         DemoServiceConnection _serviceConnection;
         private static bool _isBinding = false;
+        private int exceptionCounter = 0;
 
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
             SetContentView(Resource.Layout.Main);
 
-            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
-            var db = new SQLiteConnection(dbPath);
-            db.DropTable<Point>();
-
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
             _errorText = FindViewById<TextView>(Resource.Id.textErrorInfo);
-
+            
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
 
@@ -67,7 +67,6 @@ namespace Xamarin.Android.MobileTracker
                 var intent = new Intent(this, typeof(MapActivity));
                 StartActivity(intent);
             };
- //           _serviceConnection = LastNonConfigurationInstance as DemoServiceConnection;
         }
 
         public void Subscribe()
@@ -78,7 +77,18 @@ namespace Xamarin.Android.MobileTracker
             {
                 _isBinding = true;
                 _binder.GetDemoService().LogicManager.OnLocationChangedEvent += OnLocationChanged;
+                _binder.GetDemoService().OnError += OnError;
             }
+        }
+
+        private void OnError(Exception exception)
+        {
+            var stackTracae = new StackTrace();
+            exceptionCounter ++;
+            var errorMessage = exceptionCounter + ")" + stackTracae.GetFrame(1).GetMethod().Name + ": " + exception.Message;
+
+            _errorText.Text = errorMessage;
+            Toast.MakeText(this, errorMessage, ToastLength.Long).Show();
         }
 
         private void OnSendClick(object sender, EventArgs eventArgs)
@@ -89,7 +99,7 @@ namespace Xamarin.Android.MobileTracker
             }
             catch (Exception e)
             {
-                _errorText.Text = e.Message;
+                OnError(e);
             }
         }
 
@@ -108,7 +118,7 @@ namespace Xamarin.Android.MobileTracker
             }
             catch (Exception e)
             {
-                _errorText.Text = e.Message;
+                OnError(e);
             }
         }
 
@@ -123,9 +133,9 @@ namespace Xamarin.Android.MobileTracker
                 var address = addressList.FirstOrDefault();
                 return address;
             }
-            catch (Exception e)
+            catch
             {
-                _errorText.Text = e.Message;
+                // ignored
             }
             return null;
         }
@@ -143,14 +153,10 @@ namespace Xamarin.Android.MobileTracker
                     }
                     _addressText.Text = deviceAddress.ToString();
                 }
-                else
-                {
-                    _addressText.Text = "Unable to determine the address. Try again in a few minutes.";
-                }
             }
-            catch (Exception e)
+            catch
             {
-                _errorText.Text = e.Message;
+                // ignored
             }
         }
 
@@ -172,7 +178,7 @@ namespace Xamarin.Android.MobileTracker
             }
             catch (Exception e)
             {
-                _errorText.Text = e.Message;
+                OnError(e);
             }
         }
 
@@ -184,7 +190,7 @@ namespace Xamarin.Android.MobileTracker
             }
             catch (Exception e)
             {
-                _errorText.Text = e.Message;
+                OnError(e);
             }
         }
 
@@ -209,6 +215,7 @@ namespace Xamarin.Android.MobileTracker
                     
                     // keep instance for preservation across configuration changes
                     Binder = (LocationService.LocationServiceBinder)service;
+                    Binder.GetDemoService().OnError += Activity.OnError;
                     Binder.GetDemoService().Initialize();
                     Activity.Subscribe();
                 }
@@ -216,6 +223,7 @@ namespace Xamarin.Android.MobileTracker
 
             public void OnServiceDisconnected(ComponentName name)
             {
+                Binder.GetDemoService().OnError -= Activity.OnError;
                 Binder.Dispose();
             }
         }

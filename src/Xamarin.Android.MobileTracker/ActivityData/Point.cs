@@ -71,7 +71,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                         ",0,1111.5,"
                         + CommaToDot(location.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
                         + CommaToDot(location.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                        "," + stringTime + ",0302,0720,2710,E601,,,,20160504114928," + Ack + "$";
+                        "," + stringTime + ",0302,0720,2710,E601,,,," + stringTime + "," + Ack + "$";
+            //sended time and gps time is equal. it bad
         }
         
         private string CommaToDot(string message)

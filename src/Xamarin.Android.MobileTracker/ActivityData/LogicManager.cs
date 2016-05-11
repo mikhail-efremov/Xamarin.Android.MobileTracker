@@ -2,9 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Android.Locations;
-using Android.Widget;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
@@ -12,15 +10,18 @@ namespace Xamarin.Android.MobileTracker.ActivityData
     public class LogicManager
     {
         public OnLocationChanged OnLocationChangedEvent;
+        public OnError OnError;
+
         private LocationListener _locationListener;
         private readonly Configuration _configuration;
         private static bool _isSubscribed = false;
         private readonly UdpServer _udpServer;
-        private const string UniqueId = "868498018462694";
+        private readonly string _uniqueId;
 
-        public LogicManager()
+        public LogicManager(string uniqueId)
         {
             _configuration = new Configuration();
+            _uniqueId = uniqueId;
             
             _udpServer = new UdpServer("216.187.77.151", 6066);
             _udpServer.OnAckReceive += ack =>
@@ -31,19 +32,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                 var point = db.Get<Point>(p => p.Ack == ack);
                 point.Acked = true;
                 db.Update(point);
-
-                Task.Factory.StartNew(() =>
-                {
-                    var pdsa = db.Table<Point>();
-                    var points = db.Table<Point>().Where(p => p.Acked == false);
-                    if (points.ToList().Count == 0)
-                        return;
-                    foreach (var p in points)
-                    {
-                        _udpServer.Send(p.Message);
-                        Thread.Sleep(100);
-                    }
-                });
             };
         }
 
@@ -72,6 +60,9 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void StopRequestLocation()
         {
+            if (_locationListener == null) return;
+            // ReSharper disable once DelegateSubtraction
+            _locationListener.OnLocationChangedEvent -= OnLocationChanged;
             _locationListener.Stop();
         }
 
@@ -84,9 +75,31 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             else
             {
                 OnLocationChangedEvent(location);
-                var point = new Point(UniqueId, location);
+                var point = new Point(_uniqueId, location);
                 point.SaveInBase();
                 _udpServer.Send(point.Message);
+            }
+        }
+
+        public void SendOldPoints()
+        {
+            try
+            {
+                var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+                var db = new SQLiteConnection(dbPath);
+
+                var points = db.Table<Point>().Where(p => p.Acked == false);
+                if (points.ToList().Count == 0)
+                    return;
+                foreach (var p in points)
+                {
+                    _udpServer.Send(p.Message);
+                    Thread.Sleep(1000);
+                }
+            }
+            catch (Exception e)
+            {
+                OnError(e);
             }
         }
     }

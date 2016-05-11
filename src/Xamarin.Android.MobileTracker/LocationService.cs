@@ -8,9 +8,12 @@ using Android.Util;
 using Android.Widget;
 using Xamarin.Android.MobileTracker.ActivityData;
 using Android.Locations;
+using Android.Telephony;
 
 namespace Xamarin.Android.MobileTracker
 {
+    public delegate void OnError(Exception exception);
+
     [Service]
     public class LocationService : Service, ISensorEventListener
     {
@@ -18,16 +21,24 @@ namespace Xamarin.Android.MobileTracker
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
         public DateTime LastLocationCall;
         public bool IsRequestSendeed;
+        public OnError OnError;
         static readonly object _syncLock = new object();
 
         public bool IsStarted { get; private set; }
-        public Timer Timer { get; private set; }
         public LogicManager LogicManager;
         private Location _currentLocation;
-        private string _errorText;
         private LocationManager _locationManager;
         private LocationServiceBinder _binder;
         SensorManager _sensorManager;
+
+        public string UniqueId
+        {
+            get
+            {
+                var telephonyManager = (TelephonyManager)GetSystemService(TelephonyService);
+                return telephonyManager.DeviceId;
+            }
+        }
 
         [Obsolete("deprecated")]
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
@@ -35,30 +46,33 @@ namespace Xamarin.Android.MobileTracker
             IsStarted = true;
             IsRequestSendeed = false;
 
-            SendToast("Service was started");
+            SendToast("Service was started 15");
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
-   /*         Timer = new Timer(o =>
-            {
-                GetLocation();
-            }
-            , null, 0, TimerWait);
-            */
 
             return StartCommandResult.Sticky;
         }
         
         public override void OnCreate()
         {
-            _sensorManager = (SensorManager)GetSystemService(Context.SensorService);
-            _sensorManager.RegisterListener(this,
-                                            _sensorManager.GetDefaultSensor(SensorType.StepDetector),
-                                            SensorDelay.Ui);
+            try
+            {
+                _sensorManager = (SensorManager)GetSystemService(Context.SensorService);
+                _sensorManager.RegisterListener(this,
+                                                _sensorManager.GetDefaultSensor(SensorType.StepCounter),
+                                                SensorDelay.Normal);
+            }
+            catch (Exception e)
+            {
+                OnError(e);
+            }
         }
 
         public void Initialize()
         {
             IsStarted = false;
-            LogicManager = new LogicManager();
+            LogicManager = new LogicManager(UniqueId);
+            LogicManager.OnError += OnError;
+            LogicManager.SendOldPoints();
             LogicManager.OnLocationChangedEvent += OnLocationChanged;
             _locationManager = (LocationManager)GetSystemService(LocationService);
             SendToast("Service was initialized");
@@ -66,11 +80,20 @@ namespace Xamarin.Android.MobileTracker
 
         private void GetLocation()
         {
-            if (IsRequestSendeed == false && LastLocationCall < DateTime.Now.AddMinutes(-2))
+            if(_locationManager == null)
+                return;
+            try
             {
-                LogicManager.ForceRequestLocation(_locationManager);
-                LastLocationCall = DateTime.Now;
-                IsRequestSendeed = true;
+                if (IsRequestSendeed == false && LastLocationCall <  DateTime.Now.AddMinutes(-1.0))
+                {
+                    LogicManager.ForceRequestLocation(_locationManager);
+                    LastLocationCall = DateTime.Now;
+                    IsRequestSendeed = true;
+                }
+            }
+            catch (Exception e)
+            {
+                OnError(e);
             }
         }
 
@@ -78,6 +101,7 @@ namespace Xamarin.Android.MobileTracker
         {
             try
             {
+                IsRequestSendeed = false;
                 if (location != null)
                 {
                     _currentLocation = location;
@@ -85,20 +109,23 @@ namespace Xamarin.Android.MobileTracker
             }
             catch (Exception e)
             {
-                _errorText = e.Message;
+                OnError(e);
             }
         }
 
         public override void OnDestroy()
         {
-            LogicManager.StopRequestLocation();
-            SendToast("Service was destroyed");
-            base.OnDestroy();
-
-            Timer.Dispose();
-            Timer = null;
-
-            Log.Debug(Tag, "LocationService destroyed at {0}.", DateTime.UtcNow);
+            try
+            {
+                LogicManager.StopRequestLocation();
+                SendToast("Service was destroyed");
+                base.OnDestroy();
+                Log.Debug(Tag, "LocationService destroyed at {0}.", DateTime.UtcNow);
+            }
+            catch (Exception e)
+            {
+                OnError(e);
+            }
         }
 
         public override void OnTaskRemoved(Intent rootIntent)
