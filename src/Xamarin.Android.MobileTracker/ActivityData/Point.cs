@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using Android.Database.Sqlite;
 using Android.Locations;
 using SQLite;
 
@@ -25,12 +24,14 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public string Provider { get; set; }
         public float Speed { get; set; }
         public long Time { get; set; }
-        public string Message { get; set; }
         public int Ack { get; set; }
         public bool Acked { get; set; }
+        public DateTime GpsTime { get; set; }
+        public string UniqueId { get; set; }
 
         public Point(string uniqueId, Location location)
         {
+            UniqueId = uniqueId;
             Accuracy = location.Accuracy;
             Altitude = location.Altitude;
             Bearing = location.Bearing;
@@ -45,13 +46,13 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             Provider = location.Provider;
             Speed = location.Speed;
             Time = location.Time;
-            InitMessage(uniqueId, location);
+            GpsTime = DateTime.Now;
         }
 
         public Point()
         { }
 
-        public void InitMessage(string uniqueId, Location location)
+        public string GetMessageToSend()
         {
             var now = DateTime.Now;
             var year = now.Year.ToString("0000");
@@ -60,18 +61,26 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             var hour = now.Hour.ToString("00");
             var minute = now.Minute.ToString("00");
             var second = now.Second.ToString("00");
+            var sendTime = year + month + day + hour + minute + second;
+            
+            var gpsyear = GpsTime.Year.ToString("0000");
+            var gpsmonth = GpsTime.Month.ToString("00");
+            var gpsday = GpsTime.Day.ToString("00");
+            var gpshour = GpsTime.Hour.ToString("00");
+            var gpsminute = GpsTime.Minute.ToString("00");
+            var gpssecond = GpsTime.Second.ToString("00");
+            var gpsTime = gpsyear + gpsmonth + gpsday + gpshour + gpsminute + gpssecond;
 
-            var stringTime = year + month + day + hour + minute + second;
-            var speed = location.Speed.ToString(CultureInfo.InvariantCulture);
+            var speed = Speed.ToString(CultureInfo.InvariantCulture);
             var battery = new Battery();
             var batteryPest = battery.RemainingChargePercent.ToString();
             Ack = GetGreatestAck();
 
-            Message = "+RESP:GTCTN,110107," + uniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
+            return "+RESP:GTCTN,110107," + UniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
                         ",0,1111.5,"
-                        + CommaToDot(location.Longitude.ToString(CultureInfo.InvariantCulture)) + ","
-                        + CommaToDot(location.Latitude.ToString(CultureInfo.InvariantCulture)) +
-                        "," + stringTime + ",0302,0720,2710,E601,,,," + stringTime + "," + Ack + "$";
+                        + CommaToDot(Longitude.ToString(CultureInfo.InvariantCulture)) + ","
+                        + CommaToDot(Latitude.ToString(CultureInfo.InvariantCulture)) +
+                        "," + gpsTime + ",0302,0720,2710,E601,,,," + sendTime + "," + Ack + "$";
             //sended time and gps time is equal. it bad
         }
         

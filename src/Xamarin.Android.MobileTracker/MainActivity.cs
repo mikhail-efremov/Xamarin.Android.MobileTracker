@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using Android.App;
 using Android.Widget;
 using Android.OS;
@@ -9,10 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using Android.Content;
-using Android.Telephony;
-using SQLite;
-using Xamarin.Android.MobileTracker.ActivityData;
-using Environment = System.Environment;
 using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker

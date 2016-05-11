@@ -22,7 +22,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         {
             _configuration = new Configuration();
             _uniqueId = uniqueId;
-            
+
             _udpServer = new UdpServer("216.187.77.151", 6066);
             _udpServer.OnAckReceive += ack =>
             {
@@ -75,9 +75,10 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             else
             {
                 OnLocationChangedEvent(location);
-                var point = new Point(_uniqueId, location);
+                SendOldPoints();
+                var point = new Point(_uniqueId, location);                
                 point.SaveInBase();
-                _udpServer.Send(point.Message);
+                _udpServer.Send(point.GetMessageToSend());
             }
         }
 
@@ -93,7 +94,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                     return;
                 foreach (var p in points)
                 {
-                    _udpServer.Send(p.Message);
+                    _udpServer.Send(p.GetMessageToSend());
                     Thread.Sleep(1000);
                 }
             }
