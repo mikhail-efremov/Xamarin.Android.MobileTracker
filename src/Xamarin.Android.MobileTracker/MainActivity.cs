@@ -12,7 +12,7 @@ using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker
 {
-    [Activity(Label = "14 Xamarin.Android.MobileTracker", MainLauncher = true, Icon = "@drawable/icon")]
+    [Activity(Label = "Personal Tracker", MainLauncher = true, Icon = "@drawable/icon")]
     public class MainActivity : Activity
     {
         public static readonly string Tag = "X:" + typeof(MainActivity).Name;
@@ -189,6 +189,21 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+        }
+
+        protected override void OnStop()
+        {
+            base.OnStop();
+        }
+
         private class DemoServiceConnection : Java.Lang.Object, IServiceConnection
         {
             private MainActivity Activity { get; }
@@ -210,6 +225,7 @@ namespace Xamarin.Android.MobileTracker
                     
                     // keep instance for preservation across configuration changes
                     Binder = (LocationService.LocationServiceBinder)service;
+                    Binder.GetDemoService().ACTIVITY = Activity;
                     Binder.GetDemoService().OnError += Activity.OnError;
                     Binder.GetDemoService().Initialize();
                     Activity.Subscribe();

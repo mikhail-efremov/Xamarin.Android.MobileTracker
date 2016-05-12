@@ -1,6 +1,8 @@
 using System;
 using Android.App;
 using Android.Content;
+using Android.Content.Res;
+using Android.Graphics;
 using Android.Hardware;
 using Android.OS;
 using Android.Util;
@@ -16,6 +18,8 @@ namespace Xamarin.Android.MobileTracker
     [Service]
     public class LocationService : Service, ISensorEventListener
     {
+        public MainActivity ACTIVITY;
+
         public static readonly int TimerWait = 60000;
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
         public DateTime LastLocationCall;
@@ -45,7 +49,29 @@ namespace Xamarin.Android.MobileTracker
             IsStarted = true;
             IsRequestSendeed = false;
 
-            SendToast("Service was started 15");
+            /*
+            var resultIntent = new Intent(ACTIVITY, typeof(MainActivity));
+            
+            var stackBuilder = TaskStackBuilder.Create(ACTIVITY);
+            stackBuilder.AddParentStack(Java.Lang.Class.FromType(typeof(MainActivity)));
+            stackBuilder.AddNextIntent(resultIntent);
+
+            var resultPendingIntent =
+                stackBuilder.GetPendingIntent(0, PendingIntentFlags.UpdateCurrent);
+
+            */
+            var builder = new Notification.Builder(this)
+                .SetContentTitle("Personal Tracker")
+                .SetContentText("Service is working. Coming soon to click event!")
+                .SetSmallIcon(Resource.Drawable.Icon)
+                .SetLargeIcon(BitmapFactory.DecodeResource(Resources, Resource.Drawable.IconBlack));
+            //    .SetContentIntent(resultPendingIntent);
+
+            var notification = builder.Build();
+
+            StartForeground(startId, notification);
+
+            SendToast("Service was started");
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
 
             return StartCommandResult.Sticky;
