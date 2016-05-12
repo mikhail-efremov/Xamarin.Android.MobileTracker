@@ -47,6 +47,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             Speed = location.Speed;
             Time = location.Time;
             GpsTime = DateTime.Now;
+            Ack = GetGreatestAck();
         }
 
         public Point()
@@ -74,7 +75,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             var speed = Speed.ToString(CultureInfo.InvariantCulture);
             var battery = new Battery();
             var batteryPest = battery.RemainingChargePercent.ToString();
-            Ack = GetGreatestAck();
 
             return "+RESP:GTCTN,110107," + UniqueId + ",GL505,0,1,1,8.6," + batteryPest + ",4," + speed +
                         ",0,1111.5,"

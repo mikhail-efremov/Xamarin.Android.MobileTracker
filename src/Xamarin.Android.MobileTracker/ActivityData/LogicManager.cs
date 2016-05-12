@@ -28,10 +28,12 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             {
                 var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
                 var db = new SQLiteConnection(dbPath);
+                var points = db.Table<Point>();
 
                 var point = db.Get<Point>(p => p.Ack == ack);
                 point.Acked = true;
                 db.Update(point);
+                _udpServer.Acked(point);
             };
         }
 
@@ -75,26 +77,35 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             else
             {
                 OnLocationChangedEvent(location);
-                SendOldPoints();
-                var point = new Point(_uniqueId, location);                
-                point.SaveInBase();
-                _udpServer.Send(point.GetMessageToSend());
+                var point = new Point(_uniqueId, location);
+                SaveInBase(point);
+                SendToServer(point);
             }
         }
 
-        public void SendOldPoints()
+        private void SaveInBase(Point point)
+        {
+            point.SaveInBase();
+        }
+
+        private void SendToServer(Point point)
+        {
+            _udpServer.Add(point);
+        }
+
+        public void InitializeSendProcess()
         {
             try
             {
                 var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
                 var db = new SQLiteConnection(dbPath);
-
+                
                 var points = db.Table<Point>().Where(p => p.Acked == false);
                 if (points.ToList().Count == 0)
                     return;
                 foreach (var p in points)
                 {
-                    _udpServer.Send(p.GetMessageToSend());
+                    _udpServer.Add(p);
                     Thread.Sleep(1000);
                 }
             }

@@ -71,7 +71,7 @@ namespace Xamarin.Android.MobileTracker
             IsStarted = false;
             LogicManager = new LogicManager(UniqueId);
             LogicManager.OnError += OnError;
-            LogicManager.SendOldPoints();
+            LogicManager.InitializeSendProcess();
             LogicManager.OnLocationChangedEvent += OnLocationChanged;
             _locationManager = (LocationManager)GetSystemService(LocationService);
             SendToast("Service was initialized");
