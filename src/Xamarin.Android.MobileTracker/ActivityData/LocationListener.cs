@@ -12,7 +12,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public OnLocationChanged OnLocationChangedEvent;
         private readonly LocationManager _locationManager;
         private string _locationProvider;
-        private Location _currentLocation;
 
         public LocationListener(LocationManager locationManager)
         {
@@ -54,7 +53,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public void OnLocationChanged(Location location)
         {
             OnLocationChangedEvent(location);
-            _currentLocation = location;
         }
 
         public void OnProviderDisabled(string provider) { }

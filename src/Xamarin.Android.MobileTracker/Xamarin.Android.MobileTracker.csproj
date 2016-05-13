@@ -56,10 +56,10 @@
   <ItemGroup>
     <Compile Include="ActivityData\Battery.cs" />
     <Compile Include="ActivityData\Configuration.cs" />
-    <Compile Include="ActivityData\IBattery.cs" />
     <Compile Include="ActivityData\LocationListener.cs" />
     <Compile Include="ActivityData\LogicManager.cs" />
     <Compile Include="ActivityData\Point.cs" />
+    <Compile Include="ActivityData\SensorListener.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="MapActivity.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />

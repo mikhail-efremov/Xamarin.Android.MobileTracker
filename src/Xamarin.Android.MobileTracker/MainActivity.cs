@@ -225,7 +225,7 @@ namespace Xamarin.Android.MobileTracker
                     
                     // keep instance for preservation across configuration changes
                     Binder = (LocationService.LocationServiceBinder)service;
-                    Binder.GetDemoService().ACTIVITY = Activity;
+                    Binder.GetDemoService().Activity = Activity;
                     Binder.GetDemoService().OnError += Activity.OnError;
                     Binder.GetDemoService().Initialize();
                     Activity.Subscribe();

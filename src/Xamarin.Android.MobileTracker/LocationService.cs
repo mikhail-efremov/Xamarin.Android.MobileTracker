@@ -2,42 +2,35 @@ using System;
 using System.Threading;
 using Android.App;
 using Android.Content;
-using Android.Content.Res;
 using Android.Graphics;
-using Android.Hardware;
 using Android.OS;
 using Android.Util;
 using Android.Widget;
 using Xamarin.Android.MobileTracker.ActivityData;
 using Android.Locations;
 using Android.Telephony;
-using SQLite;
-using Environment = System.Environment;
-using Point = Xamarin.Android.MobileTracker.ActivityData.Point;
 
 namespace Xamarin.Android.MobileTracker
 {
     public delegate void OnError(Exception exception);
 
     [Service]
-    public class LocationService : Service, ISensorEventListener
+    public class LocationService : Service
     {
-        public MainActivity ACTIVITY;
+        public MainActivity Activity;
 
         public static readonly int TimerWait = 60000;
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
         public DateTime LastLocationCall;
         public bool IsRequestSendeed;
         public OnError OnError;
-        static readonly object _syncLock = new object();
 
         public bool IsStarted { get; private set; }
         public LogicManager LogicManager;
-        private Location _currentLocation;
         private LocationManager _locationManager;
         private LocationServiceBinder _binder;
-        SensorManager _sensorManager;
         private Timer _timer;
+        private SensorListener _sensorListener;
 
         public string UniqueId
         {
@@ -55,24 +48,11 @@ namespace Xamarin.Android.MobileTracker
         {
             IsStarted = true;
             IsRequestSendeed = false;
-
-            /*
-            var resultIntent = new Intent(ACTIVITY, typeof(MainActivity));
-            
-            var stackBuilder = TaskStackBuilder.Create(ACTIVITY);
-            stackBuilder.AddParentStack(Java.Lang.Class.FromType(typeof(MainActivity)));
-            stackBuilder.AddNextIntent(resultIntent);
-
-            var resultPendingIntent =
-                stackBuilder.GetPendingIntent(0, PendingIntentFlags.UpdateCurrent);
-
-            */
             var builder = new Notification.Builder(this)
                 .SetContentTitle("Personal Tracker")
                 .SetContentText("Service is working. Coming soon to click event!")
                 .SetSmallIcon(Resource.Drawable.Icon)
                 .SetLargeIcon(BitmapFactory.DecodeResource(Resources, Resource.Drawable.IconBlack));
-            //    .SetContentIntent(resultPendingIntent);
 
             var notification = builder.Build();
 
@@ -82,22 +62,16 @@ namespace Xamarin.Android.MobileTracker
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
 
             _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
+
+            _sensorListener = new SensorListener();
+            _sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
+
             return StartCommandResult.Sticky;
         }
-        
-        public override void OnCreate()
+
+        private void OnSensorChangedEvent()
         {
-            try
-            {
-                _sensorManager = (SensorManager)GetSystemService(Context.SensorService);
-                _sensorManager.RegisterListener(this,
-                                                _sensorManager.GetDefaultSensor(SensorType.StepCounter),
-                                                SensorDelay.Normal);
-            }
-            catch (Exception e)
-            {
-                OnError(e);
-            }
+            GetLocation(LocationCallReason.Step);
         }
 
         public void Initialize()
@@ -127,28 +101,38 @@ namespace Xamarin.Android.MobileTracker
                 {
                     return;
                 }
-                if (reason == LocationCallReason.Step)
+                switch (reason)
                 {
-                    if(LastLocationCall < DateTime.Now.AddMinutes(-5.0))
+                    case LocationCallReason.Step:
                     {
-                        LogicManager.ForceRequestLocation(_locationManager);
-                        LastLocationCall = DateTime.Now;
-                        IsRequestSendeed = true;
+                        if (LastLocationCall < DateTime.Now.AddMinutes(-5.0))
+                        {
+                            LogicManager.ForceRequestLocation(_locationManager);
+                            LastLocationCall = DateTime.Now;
+                            IsRequestSendeed = true;
+                        }
+                        break;
                     }
-                }else
-                if (reason == LocationCallReason.Angle)
-                {
-                    LogicManager.ForceRequestLocation(_locationManager);
-                    LastLocationCall = DateTime.Now;
-                    IsRequestSendeed = true;
-                }else
-                if(reason == LocationCallReason.Timer)
-                {
-                    if(LastLocationCall < DateTime.Now.AddHours(-1.0))
+                    case LocationCallReason.Angle:
                     {
                         LogicManager.ForceRequestLocation(_locationManager);
                         LastLocationCall = DateTime.Now;
                         IsRequestSendeed = true;
+                        break;
+                    }
+                    case LocationCallReason.Timer:
+                    {
+                        if (LastLocationCall < DateTime.Now.AddHours(-1.0))
+                        {
+                            LogicManager.ForceRequestLocation(_locationManager);
+                            LastLocationCall = DateTime.Now;
+                            IsRequestSendeed = true;
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(reason), reason, null);
                     }
                 }
             }
@@ -163,10 +147,6 @@ namespace Xamarin.Android.MobileTracker
             try
             {
                 IsRequestSendeed = false;
-                if (location != null)
-                {
-                    _currentLocation = location;
-                }
             }
             catch (Exception e)
             {
@@ -187,11 +167,6 @@ namespace Xamarin.Android.MobileTracker
             {
                 OnError(e);
             }
-        }
-
-        public override void OnTaskRemoved(Intent rootIntent)
-        {
-            base.OnTaskRemoved(rootIntent);
         }
 
         public override IBinder OnBind(Intent intent)
@@ -217,19 +192,6 @@ namespace Xamarin.Android.MobileTracker
             public LocationService GetDemoService()
             {
                 return _service;
-            }
-        }
-
-        public void OnAccuracyChanged(Sensor sensor, SensorStatus accuracy)
-        {
-            //do nothing
-        }
-
-        public void OnSensorChanged(SensorEvent e)
-        {
-            lock (_syncLock)
-            {
-                GetLocation(LocationCallReason.Step);
             }
         }
     }
