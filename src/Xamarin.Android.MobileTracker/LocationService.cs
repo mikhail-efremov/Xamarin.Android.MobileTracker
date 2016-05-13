@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Android.App;
 using Android.Content;
 using Android.Content.Res;
@@ -10,6 +11,9 @@ using Android.Widget;
 using Xamarin.Android.MobileTracker.ActivityData;
 using Android.Locations;
 using Android.Telephony;
+using SQLite;
+using Environment = System.Environment;
+using Point = Xamarin.Android.MobileTracker.ActivityData.Point;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -33,6 +37,7 @@ namespace Xamarin.Android.MobileTracker
         private LocationManager _locationManager;
         private LocationServiceBinder _binder;
         SensorManager _sensorManager;
+        private Timer _timer;
 
         public string UniqueId
         {
@@ -42,6 +47,8 @@ namespace Xamarin.Android.MobileTracker
                 return telephonyManager.DeviceId;
             }
         }
+
+        public int TimeIntervalInMilliseconds = 3600000;
 
         [Obsolete("deprecated")]
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
@@ -74,6 +81,7 @@ namespace Xamarin.Android.MobileTracker
             SendToast("Service was started");
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
 
+            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
             return StartCommandResult.Sticky;
         }
         
@@ -103,17 +111,45 @@ namespace Xamarin.Android.MobileTracker
             SendToast("Service was initialized");
         }
 
-        private void GetLocation()
+        private void OnTimerCall(object state)
         {
-            if(_locationManager == null)
+            _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
+            GetLocation(LocationCallReason.Timer);
+        }
+
+        private void GetLocation(LocationCallReason reason)
+        {
+            if (_locationManager == null)
                 return;
             try
             {
-                if (IsRequestSendeed == false && LastLocationCall <  DateTime.Now.AddMinutes(-1.0))
+                if (IsRequestSendeed)
+                {
+                    return;
+                }
+                if (reason == LocationCallReason.Step)
+                {
+                    if(LastLocationCall < DateTime.Now.AddMinutes(-5.0))
+                    {
+                        LogicManager.ForceRequestLocation(_locationManager);
+                        LastLocationCall = DateTime.Now;
+                        IsRequestSendeed = true;
+                    }
+                }else
+                if (reason == LocationCallReason.Angle)
                 {
                     LogicManager.ForceRequestLocation(_locationManager);
                     LastLocationCall = DateTime.Now;
                     IsRequestSendeed = true;
+                }else
+                if(reason == LocationCallReason.Timer)
+                {
+                    if(LastLocationCall < DateTime.Now.AddHours(-1.0))
+                    {
+                        LogicManager.ForceRequestLocation(_locationManager);
+                        LastLocationCall = DateTime.Now;
+                        IsRequestSendeed = true;
+                    }
                 }
             }
             catch (Exception e)
@@ -193,8 +229,15 @@ namespace Xamarin.Android.MobileTracker
         {
             lock (_syncLock)
             {
-                GetLocation();
+                GetLocation(LocationCallReason.Step);
             }
         }
+    }
+
+    public enum LocationCallReason
+    {
+        Angle,
+        Step,
+        Timer
     }
 }

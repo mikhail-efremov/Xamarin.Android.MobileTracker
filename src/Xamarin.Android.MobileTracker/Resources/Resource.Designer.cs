@@ -90,6 +90,9 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f050005
 			public const int textErrorInfo = 2131034117;
 			
+			// aapt resource value: 0x7f05000a
+			public const int textEvent = 2131034122;
+			
 			// aapt resource value: 0x7f050006
 			public const int textServiceStatus = 2131034118;
 			

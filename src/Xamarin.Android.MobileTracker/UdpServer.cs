@@ -49,6 +49,7 @@ namespace Xamarin.Android.MobileTracker
             {
                 _messageBuffer.RemoveAll(p => p.Ack == point.Ack);
             }
+            OnTimerCall(null);
         }
         
         private void OnTimerCall(object state)

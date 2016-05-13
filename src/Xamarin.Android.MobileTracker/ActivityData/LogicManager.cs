@@ -1,8 +1,10 @@
 using System;
+using System.Device.Location;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using Android.Locations;
+using Android.Widget;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
@@ -17,6 +19,9 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         private static bool _isSubscribed = false;
         private readonly UdpServer _udpServer;
         private readonly string _uniqueId;
+
+        private const int Angle = 30;
+        private const int Distanse = 100;
 
         public LogicManager(string uniqueId)
         {
@@ -81,6 +86,55 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                 SaveInBase(point);
                 SendToServer(point);
             }
+        }
+
+        private Point prevPoint = null;
+        private Point prevPrevPoint = null;
+        private bool NeedToSendAngle(Point point)
+        {
+            if (prevPrevPoint == null)
+            {
+                prevPrevPoint = point;
+                return true;
+            }
+
+            if(prevPoint == null)
+            {
+                prevPoint = point;
+                return false;
+            }
+
+            var x1 = prevPrevPoint.Latitude;
+            var y1 = prevPrevPoint.Longitude;
+            var x2 = prevPoint.Latitude;
+            var y2 = prevPoint.Longitude;
+
+            var x3 = x2;
+            var y3 = x3;
+            var x4 = point.Latitude;
+            var y4 = point.Longitude;
+            
+            var angle = RadianToDegree(Math.Atan2(y2 - y1, x2 - x1) - Math.Atan2(y4 - y3, x4 - x3));
+
+            var sCoord = new GeoCoordinate(x1, y1);
+            var eCoord = new GeoCoordinate(x4, y4);
+
+            var distanse = sCoord.GetDistanceTo(eCoord);
+
+            prevPrevPoint = prevPoint;
+            prevPrevPoint = point;
+            if (angle > Angle && distanse > Distanse)
+                return true;
+            return false;
+        }
+
+        private double RadianToDegree(double radian)
+        {
+            var degree = radian * (180.0 / Math.PI);
+            if (degree < 0)
+                degree = 360 + degree;
+
+            return degree;
         }
 
         private void SaveInBase(Point point)
