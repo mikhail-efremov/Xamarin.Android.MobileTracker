@@ -4,11 +4,11 @@ using Android.Hardware;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
 {
-    public delegate void OnSensoChangedEvent();
+    public delegate void OnSensorChangedEvent();
 
     public class SensorListener : Java.Lang.Object, ISensorEventListener
     {
-        public OnSensoChangedEvent OnSensorChangedEvent;
+        public OnSensorChangedEvent OnSensorChangedEvent;
         private static readonly object SyncLock = new object();
 
         public SensorListener()

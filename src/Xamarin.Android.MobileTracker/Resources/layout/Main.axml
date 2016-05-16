@@ -45,11 +45,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textErrorInfo" />
-    <TextView
-        android:text="Service is off"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/textServiceStatus" />
     <Switch
         android:layout_width="148.0dp"
         android:layout_height="27.0dp"

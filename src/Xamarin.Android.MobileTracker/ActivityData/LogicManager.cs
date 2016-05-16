@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Android.Locations;
-using Android.Widget;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
@@ -13,18 +12,28 @@ namespace Xamarin.Android.MobileTracker.ActivityData
     {
         public OnLocationChanged OnLocationChangedEvent;
         public OnError OnError;
+        public static readonly int TimerWait = 60000;
 
         private LocationListener _locationListener;
         private readonly Configuration _configuration;
-        private static bool _isSubscribed = false;
+        private static bool _isSubscribed;
         private readonly UdpServer _udpServer;
         private readonly string _uniqueId;
+        private readonly LocationManager _locationManager;
+        public DateTime LastLocationCall;
+        public bool IsRequestSendeed;
 
         private const int Angle = 30;
         private const int Distanse = 100;
+        private readonly Timer _timer;
 
-        public LogicManager(string uniqueId)
+        public int TimeIntervalInMilliseconds = 3600000;
+
+        public LogicManager(string uniqueId, LocationManager locationManager)
         {
+            IsRequestSendeed = false;
+            _isSubscribed = false;
+
             _configuration = new Configuration();
             _uniqueId = uniqueId;
 
@@ -38,8 +47,21 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                 var point = db.Get<Point>(p => p.Ack == ack);
                 point.Acked = true;
                 db.Update(point);
-                _udpServer.Acked(point);
+                _udpServer.Ack(point);
             };
+            
+            _locationManager = locationManager;
+
+            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
+
+            var sensorListener = new SensorListener();
+            sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
+        }
+
+        private void OnTimerCall(object state)
+        {
+            _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
+            GetLocation(LocationCallReason.Timer);
         }
 
         public void ForceRequestLocation(LocationManager locationManager)
@@ -65,6 +87,62 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
         }
 
+        private void OnSensorChangedEvent()
+        {
+            GetLocation(LocationCallReason.Step);
+        }
+        
+        private void GetLocation(LocationCallReason reason)
+        {
+            if (_locationManager == null)
+                return;
+            try
+            {
+                if (IsRequestSendeed)
+                {
+                    return;
+                }
+                switch (reason)
+                {
+                    case LocationCallReason.Step:
+                        {
+                            if (LastLocationCall < DateTime.Now.AddMinutes(-5.0))
+                            {
+                                ForceRequestLocation(_locationManager);
+                                LastLocationCall = DateTime.Now;
+                                IsRequestSendeed = true;
+                            }
+                            break;
+                        }
+                    case LocationCallReason.Angle:
+                        {
+                            ForceRequestLocation(_locationManager);
+                            LastLocationCall = DateTime.Now;
+                            IsRequestSendeed = true;
+                            break;
+                        }
+                    case LocationCallReason.Timer:
+                        {
+                            if (LastLocationCall < DateTime.Now.AddHours(-1.0))
+                            {
+                                ForceRequestLocation(_locationManager);
+                                LastLocationCall = DateTime.Now;
+                                IsRequestSendeed = true;
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            throw new ArgumentOutOfRangeException(nameof(reason), reason, null);
+                        }
+                }
+            }
+            catch (Exception e)
+            {
+                OnError(e);
+            }
+        }
+
         public void StopRequestLocation()
         {
             if (_locationListener == null) return;
@@ -75,6 +153,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void OnLocationChanged(Location location)
         {
+            IsRequestSendeed = false;
             if (location == null)
             {
                 Console.WriteLine("Unable to determine your location. Try again in a short while.");
@@ -88,26 +167,26 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
         }
 
-        private Point prevPoint = null;
-        private Point prevPrevPoint = null;
+        private Point _prevPoint = null;
+        private Point _prevPrevPoint = null;
         private bool NeedToSendAngle(Point point)
         {
-            if (prevPrevPoint == null)
+            if (_prevPrevPoint == null)
             {
-                prevPrevPoint = point;
+                _prevPrevPoint = point;
                 return true;
             }
 
-            if(prevPoint == null)
+            if(_prevPoint == null)
             {
-                prevPoint = point;
+                _prevPoint = point;
                 return false;
             }
 
-            var x1 = prevPrevPoint.Latitude;
-            var y1 = prevPrevPoint.Longitude;
-            var x2 = prevPoint.Latitude;
-            var y2 = prevPoint.Longitude;
+            var x1 = _prevPrevPoint.Latitude;
+            var y1 = _prevPrevPoint.Longitude;
+            var x2 = _prevPoint.Latitude;
+            var y2 = _prevPoint.Longitude;
 
             var x3 = x2;
             var y3 = x3;
@@ -121,8 +200,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
             var distanse = sCoord.GetDistanceTo(eCoord);
 
-            prevPrevPoint = prevPoint;
-            prevPrevPoint = point;
+            _prevPrevPoint = _prevPoint;
+            _prevPrevPoint = point;
             if (angle > Angle && distanse > Distanse)
                 return true;
             return false;

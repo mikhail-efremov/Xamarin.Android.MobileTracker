@@ -21,7 +21,7 @@ namespace Xamarin.Android.MobileTracker
         private List<Point> _messageBuffer;
         private Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 90000;
+        public int TimeIntervalInMilliseconds = 9000;
 
         public UdpServer(string host, int port)
         {
@@ -43,7 +43,7 @@ namespace Xamarin.Android.MobileTracker
             }
         }
 
-        public void Acked(Point point)
+        public void Ack(Point point)
         {
             lock (_messageBuffer)
             {
@@ -57,8 +57,11 @@ namespace Xamarin.Android.MobileTracker
             _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
             if (_messageBuffer.Count > 0)
             {
-                var ack = Send(_messageBuffer[0].GetMessageToSend());
-                OnAckReceive(ack);
+                var task = Task.Run(() => Send(_messageBuffer[0].GetMessageToSend()));
+                if (task.Wait(TimeSpan.FromSeconds(10)))
+                    OnAckReceive(task.Result);
+                else
+                    Console.WriteLine("((");
             }
         }
 

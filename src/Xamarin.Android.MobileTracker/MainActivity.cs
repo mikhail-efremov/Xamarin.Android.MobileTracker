@@ -22,7 +22,7 @@ namespace Xamarin.Android.MobileTracker
         private Location _currentLocation;
         
         LocationService.LocationServiceBinder _binder;
-        DemoServiceConnection _serviceConnection;
+        LocationServiceConnection _serviceConnection;
         private static bool _isBinding = false;
         private int exceptionCounter = 0;
 
@@ -37,19 +37,16 @@ namespace Xamarin.Android.MobileTracker
             
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
-
-            var statusText = FindViewById<TextView>(Resource.Id.textServiceStatus);
+            
             var s = FindViewById<Switch>(Resource.Id.switchService);
             s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
                 if (e.IsChecked)
                 {
-                    statusText.Text = "Service is on";
-                    _serviceConnection = new DemoServiceConnection(this);
+                    _serviceConnection = new LocationServiceConnection(this);
                     ApplicationContext.BindService(new Intent(this, typeof(LocationService)), _serviceConnection, Bind.AutoCreate);
                 }
                 else
                 {
-                    statusText.Text = "Service is off";
                     ApplicationContext.StopService(new Intent(this, typeof(LocationService)));
                     ApplicationContext.UnbindService(_serviceConnection);
                     StopService(new Intent(this, typeof(LocationService)));
@@ -204,13 +201,13 @@ namespace Xamarin.Android.MobileTracker
             base.OnStop();
         }
 
-        private class DemoServiceConnection : Java.Lang.Object, IServiceConnection
+        private class LocationServiceConnection : Java.Lang.Object, IServiceConnection
         {
             private MainActivity Activity { get; }
 
             private LocationService.LocationServiceBinder Binder { get; set; }
 
-            public DemoServiceConnection(MainActivity activity)
+            public LocationServiceConnection(MainActivity activity)
             {
                 Activity = activity;
             }
