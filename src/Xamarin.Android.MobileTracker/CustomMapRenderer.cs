@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Android.Content;
 using Android.Gms.Maps;
 using Android.Gms.Maps.Model;
@@ -16,10 +17,10 @@ namespace Xamarin.Android.MobileTracker
 {
     public class CustomMapRenderer : MapRenderer, GoogleMap.IInfoWindowAdapter, IOnMapReadyCallback
     {
-        GoogleMap map;
-        List<CustomPin> customPins;
-        List<Position> routeCoordinates;
-        bool isDrawn;
+        private GoogleMap _map;
+        private List<CustomPin> _customPins;
+        private List<Position> _routeCoordinates;
+        private bool _isDrawn;
 
         protected override void OnElementChanged(Forms.Platform.Android.ElementChangedEventArgs<View> e)
         {
@@ -27,14 +28,14 @@ namespace Xamarin.Android.MobileTracker
 
             if (e.OldElement != null)
             {
-                map.InfoWindowClick -= OnInfoWindowClick;
+                _map.InfoWindowClick -= OnInfoWindowClick;
             }
 
             if (e.NewElement != null)
             {
                 var formsMap = (CustomMap)e.NewElement;
-                customPins = formsMap.CustomPins;
-                routeCoordinates = formsMap.RouteCoordinates;
+                _customPins = formsMap.CustomPins;
+                _routeCoordinates = formsMap.RouteCoordinates;
 
                 ((MapView)Control).GetMapAsync(this);
             }
@@ -42,31 +43,31 @@ namespace Xamarin.Android.MobileTracker
 
         public void OnMapReady(GoogleMap googleMap)
         {
-            map = googleMap;
+            _map = googleMap;
 
             var polylineOptions = new PolylineOptions();
             polylineOptions.InvokeColor(0x66FF0000);
 
-            foreach (var position in routeCoordinates)
+            foreach (var position in _routeCoordinates)
             {
                 polylineOptions.Add(new LatLng(position.Latitude, position.Longitude));
             }
 
-            map.AddPolyline(polylineOptions);
+            _map.AddPolyline(polylineOptions);
 
-            map.InfoWindowClick += OnInfoWindowClick;
-            map.SetInfoWindowAdapter(this);
+            _map.InfoWindowClick += OnInfoWindowClick;
+            _map.SetInfoWindowAdapter(this);
         }
 
         protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
 
-            if (e.PropertyName.Equals("VisibleRegion") && !isDrawn)
+            if (e.PropertyName.Equals("VisibleRegion") && !_isDrawn)
             {
-                map.Clear();
-                if(customPins != null)
-                foreach (var pin in customPins)
+                _map.Clear();
+                if(_customPins != null)
+                foreach (var pin in _customPins)
                 {
                     var marker = new MarkerOptions();
                     marker.SetPosition(new LatLng(pin.Pin.Position.Latitude, pin.Pin.Position.Longitude));
@@ -74,20 +75,20 @@ namespace Xamarin.Android.MobileTracker
                     marker.SetSnippet(pin.Pin.Address);
                  //   marker.SetIcon(BitmapDescriptorFactory.FromResource(Resource.Drawable.pin));
 
-                    map.AddMarker(marker);
+                    _map.AddMarker(marker);
                 }
 
                 var polylineOptions = new PolylineOptions();
                 polylineOptions.InvokeColor(0x66FF0000);
 
-                foreach (var position in routeCoordinates)
+                foreach (var position in _routeCoordinates)
                 {
                     polylineOptions.Add(new LatLng(position.Latitude, position.Longitude));
                 }
 
-                map.AddPolyline(polylineOptions);
+                _map.AddPolyline(polylineOptions);
 
-                isDrawn = true;
+                _isDrawn = true;
             }
         }
 
@@ -97,7 +98,7 @@ namespace Xamarin.Android.MobileTracker
 
             if (changed)
             {
-                isDrawn = false;
+                _isDrawn = false;
             }
         }
 
@@ -107,14 +108,6 @@ namespace Xamarin.Android.MobileTracker
             if (customPin == null)
             {
                 throw new Exception("Custom pin not found");
-            }
-
-            if (!string.IsNullOrWhiteSpace(customPin.Url))
-            {
-              //  var url = Mono.Android.Net.Uri.Parse(customPin.Url);
-             //   var intent = new Intent(Intent.ActionView, url);
-            //    intent.AddFlags(ActivityFlags.NewTask);
-            //    Android.App.Application.Context.StartActivity(intent);
             }
         }
 
@@ -165,14 +158,7 @@ namespace Xamarin.Android.MobileTracker
         CustomPin GetCustomPin(Marker annotation)
         {
             var position = new Position(annotation.Position.Latitude, annotation.Position.Longitude);
-            foreach (var pin in customPins)
-            {
-                if (pin.Pin.Position == position)
-                {
-                    return pin;
-                }
-            }
-            return null;
+            return _customPins.FirstOrDefault(pin => pin.Pin.Position == position);
         }
     }
 }

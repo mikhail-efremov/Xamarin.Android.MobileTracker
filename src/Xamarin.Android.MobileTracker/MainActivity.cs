@@ -8,7 +8,6 @@ using Android.Content;
 using Android.Locations;
 using Android.OS;
 using Android.Widget;
-using MobileTracker;
 using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker

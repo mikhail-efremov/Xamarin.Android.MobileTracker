@@ -7,7 +7,6 @@ using Android.OS;
 using Android.Telephony;
 using Android.Util;
 using Android.Widget;
-using MobileTracker;
 using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker

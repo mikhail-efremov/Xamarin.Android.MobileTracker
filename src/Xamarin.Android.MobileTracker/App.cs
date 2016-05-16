@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Xamarin.Forms;
+using Point = Xamarin.Android.MobileTracker.ActivityData.Point;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -8,7 +9,7 @@ namespace Xamarin.Android.MobileTracker
 		public static double ScreenHeight;
 		public static double ScreenWidth;
 
-		public App (List<ActivityData.Point> points)
+		public App (IReadOnlyCollection<Point> points)
 		{
 			MainPage = new MapPage (points);
 		}

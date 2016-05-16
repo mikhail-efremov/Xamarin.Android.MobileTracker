@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Android.Locations;
-using MobileTracker;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
