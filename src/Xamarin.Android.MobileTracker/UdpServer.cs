@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xamarin.Android.MobileTracker.ActivityData;
 
-namespace Xamarin.Android.MobileTracker
+namespace MobileTracker
 {
     public delegate void OnAckReceive(int messageId);
 

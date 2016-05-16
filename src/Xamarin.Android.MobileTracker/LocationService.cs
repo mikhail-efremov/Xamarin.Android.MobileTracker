@@ -1,14 +1,14 @@
 using System;
-using System.Threading;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
+using Android.Locations;
 using Android.OS;
+using Android.Telephony;
 using Android.Util;
 using Android.Widget;
+using MobileTracker;
 using Xamarin.Android.MobileTracker.ActivityData;
-using Android.Locations;
-using Android.Telephony;
 
 namespace Xamarin.Android.MobileTracker
 {

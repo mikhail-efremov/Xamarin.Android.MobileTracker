@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" 
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:mobileTracker="clr-namespace:Xamarin.Android.MobileTracker;assembly=Xamarin.Android.MobileTracker"
+			 x:Class="Xamarin.Android.MobileTracker.MapPage">
+	<ContentPage.Content>
+		<mobileTracker:CustomMap x:Name="customMap" MapType="Street" WidthRequest="{x:Static mobileTracker:App.ScreenWidth}" HeightRequest="{x:Static mobileTracker:App.ScreenHeight}" />
+	</ContentPage.Content>
+</ContentPage>

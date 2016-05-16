@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Android.Locations;
+using MobileTracker;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
@@ -27,7 +28,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         private const int Distanse = 100;
         private readonly Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 3600000;
+        public int TimeIntervalInMilliseconds = 3600;//3600000;
 
         public LogicManager(string uniqueId, LocationManager locationManager)
         {

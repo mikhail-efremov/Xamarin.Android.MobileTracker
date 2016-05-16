@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Diagnostics;
-using Android.App;
-using Android.Widget;
-using Android.OS;
-using Android.Locations;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading.Tasks;
+using Android.App;
 using Android.Content;
+using Android.Locations;
+using Android.OS;
+using Android.Widget;
+using MobileTracker;
 using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker
@@ -16,6 +17,7 @@ namespace Xamarin.Android.MobileTracker
     public class MainActivity : Activity
     {
         public static readonly string Tag = "X:" + typeof(MainActivity).Name;
+        public static DateTime SelectedDateTime;
         private TextView _addressText;
         private TextView _locationText;
         private TextView _errorText;
@@ -37,7 +39,7 @@ namespace Xamarin.Android.MobileTracker
             
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
-            
+
             var s = FindViewById<Switch>(Resource.Id.switchService);
             s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
                 if (e.IsChecked)
@@ -56,8 +58,13 @@ namespace Xamarin.Android.MobileTracker
             var callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
             callHistoryButton.Click += (sender, e) =>
             {
-                var intent = new Intent(this, typeof(MapActivity));
-                StartActivity(intent);
+                var frag = DatePickerFragment.NewInstance(delegate (DateTime time)
+                {
+                    SelectedDateTime = time;
+                    var intent = new Intent(this, typeof(MapActivity));
+                    StartActivity(intent);
+                });
+                frag.Show(FragmentManager, DatePickerFragment.TAG);
             };
         }
 
@@ -237,3 +244,4 @@ namespace Xamarin.Android.MobileTracker
         }
     }
 }
+
