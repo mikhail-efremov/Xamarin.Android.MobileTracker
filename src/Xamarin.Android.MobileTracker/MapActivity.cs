@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Android.App;
-using Android.Content.PM;
 using Android.OS;
 using Android.Widget;
 using SQLite;
@@ -10,8 +9,7 @@ using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
-    [Activity(Label = "PersonalTracker.Map", Icon = "@drawable/icon", MainLauncher = true,
-        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+    [Activity(Label = "PersonalTracker.Map")]
     public class MapActivity : Forms.Platform.Android.FormsApplicationActivity
     {
         public static readonly string Tag = "X:" + typeof(MainActivity).Name;

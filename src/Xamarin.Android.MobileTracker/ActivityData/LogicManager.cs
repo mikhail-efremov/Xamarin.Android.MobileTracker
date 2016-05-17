@@ -71,14 +71,13 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
             if (_isSubscribed)
             {
-                _locationListener?.RequestLocation(10000, 10);
+                _locationListener?.SingleRequestLocation();
             }
             else
             {
                 _locationListener = new LocationListener(locationManager);
                 _locationListener.OnLocationChangedEvent += OnLocationChanged;
-                _locationListener?.RequestLocation(10000, 10);
-                //   _locationListener?.SingleRequestLocation();
+                _locationListener?.SingleRequestLocation();
                 _isSubscribed = true;
             }
         }
@@ -230,7 +229,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             {
                 var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
                 var db = new SQLiteConnection(dbPath);
-                
+                db.CreateTable<Point>();
+                   
                 var points = db.Table<Point>().Where(p => p.Acked == false);
                 if (points.ToList().Count == 0)
                     return;

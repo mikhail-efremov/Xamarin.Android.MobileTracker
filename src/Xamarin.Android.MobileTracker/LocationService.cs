@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -72,6 +71,7 @@ namespace Xamarin.Android.MobileTracker
                 SendToast("Service was destroyed");
                 base.OnDestroy();
                 Log.Debug(Tag, "LocationService destroyed at {0}.", DateTime.UtcNow);
+                LogicManager.OnError -= OnError;
             }
             catch (Exception e)
             {

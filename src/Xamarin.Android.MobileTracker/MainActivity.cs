@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,8 +8,6 @@ using Android.Content;
 using Android.Locations;
 using Android.OS;
 using Android.Widget;
-using SQLite;
-using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -23,11 +20,11 @@ namespace Xamarin.Android.MobileTracker
         private TextView _locationText;
         private TextView _errorText;
         private Location _currentLocation;
-        
-        LocationService.LocationServiceBinder _binder;
-        LocationServiceConnection _serviceConnection;
+
+        private LocationService.LocationServiceBinder _binder;
+        private LocationServiceConnection _serviceConnection;
         private static bool _isBinding = false;
-        private int exceptionCounter = 0;
+        private int _exceptionCounter = 0;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -85,8 +82,8 @@ namespace Xamarin.Android.MobileTracker
         private void OnError(Exception exception)
         {
             var stackTracae = new StackTrace();
-            exceptionCounter ++;
-            var errorMessage = exceptionCounter + ")" + stackTracae.GetFrame(1).GetMethod().Name + ": " + exception.Message;
+            _exceptionCounter ++;
+            var errorMessage = _exceptionCounter + ")" + stackTracae.GetFrame(1).GetMethod().Name + ": " + exception.Message;
 
             _errorText.Text = errorMessage;
             Toast.MakeText(this, errorMessage, ToastLength.Long).Show();
@@ -193,21 +190,6 @@ namespace Xamarin.Android.MobileTracker
             {
                 OnError(e);
             }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-        }
-
-        protected override void OnStop()
-        {
-            base.OnStop();
         }
 
         private class LocationServiceConnection : Java.Lang.Object, IServiceConnection
