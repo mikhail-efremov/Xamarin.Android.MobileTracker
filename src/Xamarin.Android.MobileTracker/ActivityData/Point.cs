@@ -2,11 +2,12 @@
 using System.Globalization;
 using System.IO;
 using Android.Locations;
+using Java.IO;
 using SQLite;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
 {
-    public class Point
+    public class Point : Java.Lang.Object, ISerializable
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }

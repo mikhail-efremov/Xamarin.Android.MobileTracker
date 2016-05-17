@@ -27,7 +27,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         private const int Distanse = 100;
         private readonly Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 3600;//3600000;
+        public int TimeIntervalInMilliseconds = 3600000;
 
         public LogicManager(string uniqueId, LocationManager locationManager)
         {
@@ -66,15 +66,19 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void ForceRequestLocation(LocationManager locationManager)
         {
+            LastLocationCall = DateTime.Now;
+            IsRequestSendeed = true;
+
             if (_isSubscribed)
             {
-                _locationListener?.SingleRequestLocation();
+                _locationListener?.RequestLocation(10000, 10);
             }
             else
             {
                 _locationListener = new LocationListener(locationManager);
                 _locationListener.OnLocationChangedEvent += OnLocationChanged;
-                _locationListener?.SingleRequestLocation();
+                _locationListener?.RequestLocation(10000, 10);
+                //   _locationListener?.SingleRequestLocation();
                 _isSubscribed = true;
             }
         }
@@ -109,16 +113,12 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                             if (LastLocationCall < DateTime.Now.AddMinutes(-5.0))
                             {
                                 ForceRequestLocation(_locationManager);
-                                LastLocationCall = DateTime.Now;
-                                IsRequestSendeed = true;
                             }
                             break;
                         }
                     case LocationCallReason.Angle:
                         {
                             ForceRequestLocation(_locationManager);
-                            LastLocationCall = DateTime.Now;
-                            IsRequestSendeed = true;
                             break;
                         }
                     case LocationCallReason.Timer:
@@ -126,8 +126,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                             if (LastLocationCall < DateTime.Now.AddHours(-1.0))
                             {
                                 ForceRequestLocation(_locationManager);
-                                LastLocationCall = DateTime.Now;
-                                IsRequestSendeed = true;
                             }
                             break;
                         }
@@ -239,7 +237,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                 foreach (var p in points)
                 {
                     _udpServer.Add(p);
-                    Thread.Sleep(1000);
                 }
             }
             catch (Exception e)

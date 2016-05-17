@@ -70,16 +70,21 @@ namespace Xamarin.Android.MobileTracker
             if (e.PropertyName.Equals("VisibleRegion") && !_isDrawn)
             {
                 _map.Clear();
-                if(_customPins != null)
-                foreach (var pin in _customPins)
+                if (_customPins != null)
                 {
-                    var marker = new MarkerOptions();
-                    marker.SetPosition(new LatLng(pin.Pin.Position.Latitude, pin.Pin.Position.Longitude));
-                    marker.SetTitle(pin.Pin.Label);
-                    marker.SetSnippet(pin.Pin.Address);
-                 //   marker.SetIcon(BitmapDescriptorFactory.FromResource(Resource.Drawable.pin));
+                    for (var i = 0; i < _customPins.Count; i++)
+                    {
+                        var pin = _customPins[i];
+                        var marker = new MarkerOptions();
+                        marker.SetPosition(new LatLng(pin.Pin.Position.Latitude, pin.Pin.Position.Longitude));
+                        marker.SetTitle(pin.Pin.Label);
+                        marker.SetSnippet(pin.Pin.Address);
 
-                    _map.AddMarker(marker);
+                        if (i == _customPins.Count - 1)
+                            marker.SetIcon(BitmapDescriptorFactory.FromResource(Resource.Drawable.pin));
+
+                        _map.AddMarker(marker);
+                    }
                 }
 
                 var polylineOptions = new PolylineOptions();
@@ -163,7 +168,7 @@ namespace Xamarin.Android.MobileTracker
             return null;
         }
 
-        CustomPin GetCustomPin(Marker annotation)
+        public CustomPin GetCustomPin(Marker annotation)
         {
             var position = new Position(annotation.Position.Latitude, annotation.Position.Longitude);
             return _customPins.FirstOrDefault(pin => pin.Pin.Position == position);
@@ -197,23 +202,25 @@ namespace Xamarin.Android.MobileTracker
                 {
                     image = BitmapFactory.DecodeStream(url.OpenConnection().InputStream);
                 }
-                catch (IOException e)
+                catch
                 {
+                    // ignored
                 }
             }
-            catch (MalformedURLException e)
+            catch
             {
+                // ignored
             }
 
             if (image != null)
             {
 
                 // Anchor is ratio in range [0..1] so value of 0.5 on x and y will center the marker image on the lat/long
-                float anchorX = 0.5f;
-                float anchorY = 0.5f;
+                var anchorX = 0.5f;
+                var anchorY = 0.5f;
 
-                int offsetX = 0;
-                int offsetY = 0;
+                var offsetX = 0;
+                var offsetY = 0;
 
                 // images are 24px x 24px
                 // so transformed image will be 48px x 48px

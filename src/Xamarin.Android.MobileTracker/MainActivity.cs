@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Android.Content;
 using Android.Locations;
 using Android.OS;
 using Android.Widget;
+using SQLite;
 using Switch = Android.Widget.Switch;
 
 namespace Xamarin.Android.MobileTracker
@@ -39,7 +41,7 @@ namespace Xamarin.Android.MobileTracker
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
 
-            var s = FindViewById<Switch>(Resource.Id.switchService);
+            var s = FindViewById<ToggleButton>(Resource.Id.toggleService);
             s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
                 if (e.IsChecked)
                 {
@@ -61,6 +63,7 @@ namespace Xamarin.Android.MobileTracker
                 {
                     SelectedDateTime = time;
                     var intent = new Intent(this, typeof(MapActivity));
+
                     StartActivity(intent);
                 });
                 frag.Show(FragmentManager, DatePickerFragment.TAG);

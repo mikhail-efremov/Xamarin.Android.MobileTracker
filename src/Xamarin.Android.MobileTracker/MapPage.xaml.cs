@@ -20,7 +20,7 @@ namespace Xamarin.Android.MobileTracker
 		        {
 		            Type = PinType.Place,
 		            Position = new Position(point.Latitude, point.Longitude),
-		            Label = point.GpsTime.ToLongDateString(),
+		            Label = point.GpsTime.ToLongTimeString(),
 		            Address = "Speed: " + point.Speed + " km/h"
 		        },
 		        Id = "Xamarin",
@@ -36,8 +36,10 @@ namespace Xamarin.Android.MobileTracker
 		    {
                 customMap.RouteCoordinates.Add(new Position(point.Latitude, point.Longitude));
             }
-            
-            customMap.MoveToRegion (MapSpan.FromCenterAndRadius (customMap.RouteCoordinates[0], Distance.FromMiles (1.0)));
+
+		    customMap.MoveToRegion(customMap.RouteCoordinates.Count > 0
+		        ? MapSpan.FromCenterAndRadius(customMap.RouteCoordinates[0], Distance.FromMiles(1.0))
+		        : MapSpan.FromCenterAndRadius(new Position(48.7293686, 37.4143586), Distance.FromMiles(1.0)));
 		}
 	}
 }

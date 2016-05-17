@@ -2945,9 +2945,6 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f0a0070
 			public const int submit_area = 2131361904;
 			
-			// aapt resource value: 0x7f0a0083
-			public const int switchService = 2131361923;
-			
 			// aapt resource value: 0x7f0a0019
 			public const int tabMode = 2131361817;
 			
@@ -2977,6 +2974,9 @@ namespace Xamarin.Android.MobileTracker
 			
 			// aapt resource value: 0x7f0a0053
 			public const int title_template = 2131361875;
+			
+			// aapt resource value: 0x7f0a0083
+			public const int toggleService = 2131361923;
 			
 			// aapt resource value: 0x7f0a003d
 			public const int top = 2131361853;

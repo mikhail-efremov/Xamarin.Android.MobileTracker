@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -21,7 +22,7 @@ namespace Xamarin.Android.MobileTracker
         private List<Point> _messageBuffer;
         private Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 9000;
+        public int TimeIntervalInMilliseconds = 120000;
 
         public UdpServer(string host, int port)
         {
@@ -47,7 +48,8 @@ namespace Xamarin.Android.MobileTracker
         {
             lock (_messageBuffer)
             {
-                _messageBuffer.RemoveAll(p => p.Ack == point.Ack);
+                var item = _messageBuffer.Single(p => p.Ack == point.Ack);
+                _messageBuffer.Remove(item);
             }
             OnTimerCall(null);
         }
@@ -57,11 +59,10 @@ namespace Xamarin.Android.MobileTracker
             _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
             if (_messageBuffer.Count > 0)
             {
+                // ReSharper disable once InconsistentlySynchronizedField
                 var task = Task.Run(() => Send(_messageBuffer[0].GetMessageToSend()));
-                if (task.Wait(TimeSpan.FromSeconds(10)))
+                if (task.Wait(TimeSpan.FromMilliseconds(TimeIntervalInMilliseconds)))
                     OnAckReceive(task.Result);
-                else
-                    Console.WriteLine("((");
             }
         }
 

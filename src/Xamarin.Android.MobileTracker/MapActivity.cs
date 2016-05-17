@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Widget;
 using SQLite;
 using Xamarin.Android.MobileTracker.ActivityData;
 
@@ -16,20 +18,11 @@ namespace Xamarin.Android.MobileTracker
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-            var time = MainActivity.SelectedDateTime;
-
-            var dbPath = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), "trackerdb.db3");
-            var db = new SQLiteConnection(dbPath);
-            var points = db.Table<Point>();
-
-
-            var poids = new List<Point>();
-
-            // ReSharper disable once LoopCanBeConvertedToQuery
-            foreach (var point in points)
+            var points = GetPointsByDate(MainActivity.SelectedDateTime);
+            if (points == null || points.Count == 0)
             {
-                if (point.GpsTime.Date == time.Date)
-                    poids.Add(point);
+                Toast.MakeText(this, "Not find points on this date", ToastLength.Long).Show();
+                Finish();
             }
 
             Forms.Forms.Init(this, bundle);
@@ -41,9 +34,31 @@ namespace Xamarin.Android.MobileTracker
 
             App.ScreenWidth = (width - 0.5f) / density;
             App.ScreenHeight = (height - 0.5f) / density;
+            LoadApplication(new App(points));
+        }
 
+        private List<Point> GetPointsByDate(DateTime date)
+        {
+            var dbPath = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            var points = new List<Point>();
+            try
+            {
+                var queriedPoints = db.Table<Point>();
 
-            LoadApplication(new App(poids));
+                // ReSharper disable once LoopCanBeConvertedToQuery
+                foreach (var point in queriedPoints)
+                {
+                    if (point.GpsTime.Date == date.Date)
+                        points.Add(point);
+                }
+            }
+            catch
+            {
+                Toast.MakeText(this, "Not find points on this date", ToastLength.Long).Show();
+                Finish();
+            }
+            return points;
         }
     }
 }
