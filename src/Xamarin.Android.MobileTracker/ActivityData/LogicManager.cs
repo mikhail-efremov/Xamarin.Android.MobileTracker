@@ -75,10 +75,10 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             }
             else
             {
+                _isSubscribed = true;
                 _locationListener = new LocationListener(locationManager);
                 _locationListener.OnLocationChangedEvent += OnLocationChanged;
                 _locationListener?.SingleRequestLocation();
-                _isSubscribed = true;
             }
         }
 
@@ -86,6 +86,8 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         {
             if (_isSubscribed)
             {
+                LastLocationCall = DateTime.Now;
+                IsRequestSendeed = true;
                 _locationListener?.SingleRequestLocation();
             }
         }

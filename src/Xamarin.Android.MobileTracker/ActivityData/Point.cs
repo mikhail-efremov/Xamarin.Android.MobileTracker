@@ -56,7 +56,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public string GetMessageToSend()
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var year = now.Year.ToString("0000");
             var month = now.Month.ToString("00");
             var day = now.Day.ToString("00");
