@@ -15,7 +15,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         {
             var sensorManager = (SensorManager)Application.Context.GetSystemService(Context.SensorService);
             sensorManager.RegisterListener(this,
-                                            sensorManager.GetDefaultSensor(SensorType.Accelerometer),
+                                            sensorManager.GetDefaultSensor(SensorType.StepDetector),
                                             SensorDelay.Normal);
         }
 
