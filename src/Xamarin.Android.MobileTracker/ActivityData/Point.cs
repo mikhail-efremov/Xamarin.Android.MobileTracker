@@ -47,7 +47,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             Provider = location.Provider;
             Speed = location.Speed;
             Time = location.Time;
-            GpsTime = DateTime.Now;
+            GpsTime = DateTime.UtcNow;
             Ack = GetGreatestAck();
         }
 
