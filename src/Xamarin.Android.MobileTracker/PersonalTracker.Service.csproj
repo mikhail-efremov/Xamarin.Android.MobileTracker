@@ -143,10 +143,12 @@
   <ItemGroup>
     <Compile Include="ActivityData\Battery.cs" />
     <Compile Include="ActivityData\Configuration.cs" />
+    <Compile Include="ActivityData\CrashReport.cs" />
     <Compile Include="ActivityData\LocationListener.cs" />
     <Compile Include="ActivityData\LogicManager.cs" />
     <Compile Include="ActivityData\Point.cs" />
     <Compile Include="ActivityData\SensorListener.cs" />
+    <Compile Include="ActivityData\TrackerServiceStatus.cs" />
     <Compile Include="App.cs" />
     <Compile Include="CustomMap.cs" />
     <Compile Include="CustomMapRenderer.cs" />

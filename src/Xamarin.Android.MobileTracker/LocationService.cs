@@ -7,7 +7,9 @@ using Android.OS;
 using Android.Telephony;
 using Android.Util;
 using Android.Widget;
+using SQLite;
 using Xamarin.Android.MobileTracker.ActivityData;
+using Environment = System.Environment;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -50,10 +52,10 @@ namespace Xamarin.Android.MobileTracker
 
             SendToast("Service was started");
             Log.Debug(Tag, "OnStartCommand called at {2}, flags={0}, startid={1}", flags, startId, DateTime.UtcNow);
-
+            
             return StartCommandResult.Sticky;
         }
-        
+
         public void Initialize()
         {
             IsStarted = false;
@@ -65,6 +67,9 @@ namespace Xamarin.Android.MobileTracker
 
         public override void OnDestroy()
         {
+            var stat = IsServiceWorked();
+            LogDestroy(stat);
+            if (stat) return;
             try
             {
                 LogicManager.StopRequestLocation();
@@ -77,6 +82,42 @@ namespace Xamarin.Android.MobileTracker
             {
                 OnError(e);
             }
+        }
+
+        private void LogDestroy(bool isWorked)
+        {
+            var dbPath =
+                System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal),
+                    "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            db.CreateTable<CrashReport>();
+            var destoys = db.Table<CrashReport>();
+            db.Insert(new CrashReport
+            {
+                IsServiceWorked = isWorked 
+            });
+        }
+
+        public bool IsServiceWorked()
+        {
+            var dbPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            db.CreateTable<TrackerServiceStatus>();
+            var stats = db.Table<TrackerServiceStatus>();
+            try
+            {
+                var state = db.Get<TrackerServiceStatus>(p => p.Id == 1);
+                if (state != null)
+                {
+                    return state.IsServiceWorked;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return false;
         }
 
         public override IBinder OnBind(Intent intent)

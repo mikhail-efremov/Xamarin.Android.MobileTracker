@@ -66,7 +66,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void ForceRequestLocation(LocationManager locationManager)
         {
-            LastLocationCall = DateTime.Now;
             IsRequestSendeed = true;
 
             if (_isSubscribed)
@@ -152,6 +151,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void OnLocationChanged(Location location)
         {
+            LastLocationCall = DateTime.Now;
             IsRequestSendeed = false;
             if (location == null)
             {

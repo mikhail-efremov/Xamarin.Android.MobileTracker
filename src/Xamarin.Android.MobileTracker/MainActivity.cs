@@ -8,6 +8,8 @@ using Android.Content;
 using Android.Locations;
 using Android.OS;
 using Android.Widget;
+using SQLite;
+using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
@@ -42,11 +44,13 @@ namespace Xamarin.Android.MobileTracker
             s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
                 if (e.IsChecked)
                 {
+                    UpdateServiceStatusToStart();
                     _serviceConnection = new LocationServiceConnection(this);
                     ApplicationContext.BindService(new Intent(this, typeof(LocationService)), _serviceConnection, Bind.AutoCreate);
                 }
                 else
                 {
+                    UpdateServiceStatusToStop();
                     ApplicationContext.StopService(new Intent(this, typeof(LocationService)));
                     ApplicationContext.UnbindService(_serviceConnection);
                     StopService(new Intent(this, typeof(LocationService)));
@@ -65,6 +69,60 @@ namespace Xamarin.Android.MobileTracker
                 });
                 frag.Show(FragmentManager, DatePickerFragment.TAG);
             };
+        }
+
+        private void UpdateServiceStatusToStart()
+        {
+            var dbPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            db.CreateTable<TrackerServiceStatus>();
+            var stats = db.Table<TrackerServiceStatus>();
+            try
+            {
+                var stat = db.Get<TrackerServiceStatus>(p => p.Id == 1);
+                if (stat != null)
+                {
+                    stat.IsServiceWorked = true;
+                    db.Update(stat);
+                }
+            }
+            catch
+            {
+                var stat = new TrackerServiceStatus
+                {
+                    Id = 1,
+                    IsServiceWorked = true
+                };
+                db.Insert(stat);
+            }
+        }
+
+        private void UpdateServiceStatusToStop()
+        {
+            var dbPath =
+                System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal),
+                    "trackerdb.db3");
+            var db = new SQLiteConnection(dbPath);
+            db.CreateTable<TrackerServiceStatus>();
+            var stats = db.Table<TrackerServiceStatus>();
+            try
+            {
+                var stat = db.Get<TrackerServiceStatus>(p => p.Id == 1);
+                if (stat != null)
+                {
+                    stat.IsServiceWorked = false;
+                    db.Update(stat);
+                }
+            }
+            catch
+            {
+                var stat = new TrackerServiceStatus
+                {
+                    Id = 1,
+                    IsServiceWorked = false
+                };
+                db.Insert(stat);
+            }
         }
 
         public void Subscribe()
