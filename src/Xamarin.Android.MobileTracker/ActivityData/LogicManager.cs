@@ -25,7 +25,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         private const int Angle = 30;
         private const int Distanse = 100;
-        private readonly Timer _timer;
+//        private readonly Timer _timer;
 
         public int TimeIntervalInMilliseconds = 3600000;
 
@@ -52,18 +52,18 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             
             _locationManager = locationManager;
 
-            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
+//            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
 
             var sensorListener = new SensorListener();
             sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
         }
-
+/*
         private void OnTimerCall(object state)
         {
             _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
             GetLocation(LocationCallReason.Timer);
         }
-
+*/
         public void ForceRequestLocation(LocationManager locationManager)
         {
             IsRequestSendeed = true;

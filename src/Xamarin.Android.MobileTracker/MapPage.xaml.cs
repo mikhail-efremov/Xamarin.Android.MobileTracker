@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xamarin.Forms;
 using Xamarin.Forms.Maps;
@@ -20,7 +21,7 @@ namespace Xamarin.Android.MobileTracker
 		        {
 		            Type = PinType.Place,
 		            Position = new Position(point.Latitude, point.Longitude),
-		            Label = point.GpsTime.ToLongTimeString(),
+		            Label = DateTime.SpecifyKind(point.GpsTime, DateTimeKind.Utc).ToLocalTime().ToLongTimeString(),
 		            Address = "Speed: " + point.Speed + " km/h"
 		        },
 		        Id = "Xamarin",
