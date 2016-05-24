@@ -37,6 +37,11 @@ namespace Xamarin.Android.MobileTracker
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
             _errorText = FindViewById<TextView>(Resource.Id.textErrorInfo);
             
+            SubscribeUi();
+        }
+
+        private void SubscribeUi()
+        {
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
             FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
 
@@ -56,7 +61,7 @@ namespace Xamarin.Android.MobileTracker
                     StopService(new Intent(this, typeof(LocationService)));
                 }
             };
-            
+
             var callHistoryButton = FindViewById<Button>(Resource.Id.CallMapButton);
             callHistoryButton.Click += (sender, e) =>
             {
