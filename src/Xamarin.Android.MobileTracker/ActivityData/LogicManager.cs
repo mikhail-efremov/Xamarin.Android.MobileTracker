@@ -25,7 +25,10 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         private const int Angle = 30;
         private const int Distanse = 100;
-//        private readonly Timer _timer;
+
+        private double StepTimeOutMinutes = 5.0;
+        private double TimerTimeOutHour = 1.0;
+        //        private readonly Timer _timer;
 
         public int TimeIntervalInMilliseconds = 3600000;
 
@@ -95,7 +98,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         {
             GetLocation(LocationCallReason.Step);
         }
-        
+
         private void GetLocation(LocationCallReason reason)
         {
             if (_locationManager == null)
@@ -110,7 +113,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                 {
                     case LocationCallReason.Step:
                         {
-                            if (LastLocationCall < DateTime.Now.AddMinutes(-5.0))
+                            if (LastLocationCall < DateTime.Now.AddMinutes(-StepTimeOutMinutes))
                             {
                                 ForceRequestLocation(_locationManager);
                             }
@@ -123,7 +126,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                         }
                     case LocationCallReason.Timer:
                         {
-                            if (LastLocationCall < DateTime.Now.AddHours(-1.0))
+                            if (LastLocationCall < DateTime.Now.AddHours(TimerTimeOutHour))
                             {
                                 ForceRequestLocation(_locationManager);
                             }
