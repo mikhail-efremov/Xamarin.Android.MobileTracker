@@ -24,13 +24,19 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         public bool IsRequestSendeed;
 
         private const int Angle = 30;
-        private const int Distanse = 100;
+        private const int Distanse = 500;
 
         private double StepTimeOutMinutes = 5.0;
         private double TimerTimeOutHour = 1.0;
-        //        private readonly Timer _timer;
+        private Timer _timer;
 
         public int TimeIntervalInMilliseconds = 3600000;
+
+        private readonly int _intervalDefault = 3600000;
+        private readonly int _intervalMin = 120000;
+
+        private Point _prevPoint = null;
+        private Point _prevPrevPoint = null;
 
         public LogicManager(string uniqueId, LocationManager locationManager)
         {
@@ -55,18 +61,19 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             
             _locationManager = locationManager;
 
-//            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
+            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
 
             var sensorListener = new SensorListener();
             sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
         }
-/*
+
         private void OnTimerCall(object state)
         {
-            _timer.Change(TimeIntervalInMilliseconds, Timeout.Infinite);
+            _timer.Dispose();
+            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
             GetLocation(LocationCallReason.Timer);
         }
-*/
+
         public void ForceRequestLocation(LocationManager locationManager)
         {
             IsRequestSendeed = true;
@@ -88,7 +95,6 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         {
             if (_isSubscribed)
             {
-                LastLocationCall = DateTime.Now;
                 IsRequestSendeed = true;
                 _locationListener?.SingleRequestLocation();
             }
@@ -126,7 +132,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                         }
                     case LocationCallReason.Timer:
                         {
-                            if (LastLocationCall < DateTime.Now.AddHours(TimerTimeOutHour))
+//                            if (LastLocationCall < DateTime.Now.AddSeconds(-TimerTimeOutHour))
                             {
                                 ForceRequestLocation(_locationManager);
                             }
@@ -164,13 +170,38 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             {
                 OnLocationChangedEvent(location);
                 var point = new Point(_uniqueId, location);
+                SetPrevPoint(point);
                 SaveInBase(point);
                 SendToServer(point);
             }
         }
 
-        private Point _prevPoint = null;
-        private Point _prevPrevPoint = null;
+        private void SetPrevPoint(Point point)
+        {
+            if (_prevPoint == null)
+            {
+                _prevPoint = point;
+                return;
+            }
+
+            var prevCoord = new GeoCoordinate(_prevPoint.Latitude, _prevPoint.Longitude);
+            var coord = new GeoCoordinate(point.Latitude, point.Longitude);
+
+            var distanse = prevCoord.GetDistanceTo(coord);
+
+            if (distanse > Distanse)
+            {
+                TimeIntervalInMilliseconds = _intervalMin;
+                OnTimerCall(null);
+            }
+            else
+            {
+                TimeIntervalInMilliseconds = _intervalDefault;
+                OnTimerCall(null);
+            }
+            _prevPoint = point;
+        }
+
         private bool NeedToSendAngle(Point point)
         {
             if (_prevPrevPoint == null)

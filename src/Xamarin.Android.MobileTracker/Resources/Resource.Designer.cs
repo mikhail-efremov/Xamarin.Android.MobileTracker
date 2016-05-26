@@ -2570,11 +2570,11 @@ namespace Xamarin.Android.MobileTracker
 			// aapt resource value: 0x7f0a0035
 			public const int bottom = 2131361845;
 			
+			// aapt resource value: 0x7f0a0081
+			public const int buttonForcePoss = 2131361921;
+			
 			// aapt resource value: 0x7f0a004f
 			public const int buttonPanel = 2131361871;
-			
-			// aapt resource value: 0x7f0a0081
-			public const int buttonSend = 2131361921;
 			
 			// aapt resource value: 0x7f0a00a4
 			public const int cancel_action = 2131361956;

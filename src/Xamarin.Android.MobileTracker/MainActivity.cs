@@ -44,7 +44,7 @@ namespace Xamarin.Android.MobileTracker
         private void SubscribeUi()
         {
             FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
-            FindViewById<TextView>(Resource.Id.buttonSend).Click += OnSendClick;
+            FindViewById<TextView>(Resource.Id.buttonForcePoss).Click += OnSendClick;
 
             var s = FindViewById<ToggleButton>(Resource.Id.toggleService);
             s.CheckedChange += delegate (object sender, CompoundButton.CheckedChangeEventArgs e) {
