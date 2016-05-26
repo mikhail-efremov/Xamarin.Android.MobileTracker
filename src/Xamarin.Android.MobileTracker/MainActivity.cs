@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
+using Android.Content.PM;
 using Android.Locations;
 using Android.OS;
 using Android.Widget;
@@ -13,7 +14,7 @@ using Xamarin.Android.MobileTracker.ActivityData;
 
 namespace Xamarin.Android.MobileTracker
 {
-    [Activity(Label = "Personal Tracker", MainLauncher = true, Icon = "@drawable/icon")]
+    [Activity(Label = "Personal Tracker", MainLauncher = true, Icon = "@drawable/icon", LaunchMode = LaunchMode.SingleTask)]
     public class MainActivity : Activity
     {
         public static readonly string Tag = "X:" + typeof(MainActivity).Name;
@@ -36,7 +37,7 @@ namespace Xamarin.Android.MobileTracker
             _addressText = FindViewById<TextView>(Resource.Id.address_text);
             _locationText = FindViewById<TextView>(Resource.Id.location_text);
             _errorText = FindViewById<TextView>(Resource.Id.textErrorInfo);
-            
+
             SubscribeUi();
         }
 
@@ -278,7 +279,7 @@ namespace Xamarin.Android.MobileTracker
                     Binder = (LocationService.LocationServiceBinder)service;
                     Binder.GetDemoService().Activity = Activity;
                     Binder.GetDemoService().OnError += Activity.OnError;
-                    Binder.GetDemoService().Initialize();
+                    Binder.GetDemoService().Initialize(Application.Context);
                     Activity.Subscribe();
                 }
             }

@@ -19,6 +19,7 @@ namespace Xamarin.Android.MobileTracker
     public class LocationService : Service
     {
         public MainActivity Activity;
+        private Context _mainActivityContext;
 
         private static readonly string Tag = "X:" + typeof(LocationService).Name;
         public OnError OnError;
@@ -40,13 +41,19 @@ namespace Xamarin.Android.MobileTracker
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
             IsStarted = true;
+            var contentIntent = PendingIntent.GetActivity(_mainActivityContext, startId, 
+                new Intent(_mainActivityContext, typeof(MainActivity)), 0);
+
             var builder = new Notification.Builder(this)
                 .SetContentTitle("Personal Tracker")
-                .SetContentText("Service is working. Coming soon to click event!")
+                .SetContentText("Service is working. Press to open front.")
                 .SetSmallIcon(Resource.Drawable.Icon)
-                .SetLargeIcon(BitmapFactory.DecodeResource(Resources, Resource.Drawable.IconBlack));
+                .SetLargeIcon(BitmapFactory.DecodeResource(Resources, Resource.Drawable.IconBlack))
+                .SetContentIntent(contentIntent);
 
-            var notification = builder.Build();
+
+            
+        var notification = builder.Build();
 
             StartForeground(startId, notification);
 
@@ -56,8 +63,9 @@ namespace Xamarin.Android.MobileTracker
             return StartCommandResult.Sticky;
         }
 
-        public void Initialize()
+        public void Initialize(Context context)
         {
+            _mainActivityContext = context;
             LogicManager = new LogicManager(UniqueId, (LocationManager)GetSystemService(LocationService));
             LogicManager.OnError += OnError;
             LogicManager.InitializeSendProcess();
