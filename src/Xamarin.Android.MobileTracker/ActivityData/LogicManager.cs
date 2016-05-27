@@ -2,7 +2,7 @@ using System;
 using System.Device.Location;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using System.Timers;
 using Android.Locations;
 using SQLite;
 
@@ -28,12 +28,12 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         private double StepTimeOutMinutes = 5.0;
         private double TimerTimeOutHour = 1.0;
-        private Timer _timer;
+        private System.Timers.Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 3600000;
+        public int TimeIntervalInMilliseconds = 36000;
 
-        private readonly int _intervalDefault = 3600000;
-        private readonly int _intervalMin = 120000;
+        private readonly int _intervalDefault = 36000;
+        private readonly int _intervalMin = 12000;
 
         private Point _prevPoint = null;
         private Point _prevPrevPoint = null;
@@ -61,16 +61,17 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             
             _locationManager = locationManager;
 
-            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
+            _timer = new System.Timers.Timer();
+            _timer.Elapsed += OnTimerCall;
+            _timer.Interval = TimeIntervalInMilliseconds;
+            _timer.Enabled = true;
 
             var sensorListener = new SensorListener();
             sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
         }
 
-        private void OnTimerCall(object state)
+        private void OnTimerCall(object state, ElapsedEventArgs e)
         {
-            _timer.Dispose();
-            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, Timeout.Infinite);
             GetLocation(LocationCallReason.Timer);
         }
 
@@ -192,12 +193,16 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             if (distanse > Distanse)
             {
                 TimeIntervalInMilliseconds = _intervalMin;
-                OnTimerCall(null);
+                _timer.Stop();
+                _timer.Interval = TimeIntervalInMilliseconds;
+                _timer.Start();
             }
             else
             {
                 TimeIntervalInMilliseconds = _intervalDefault;
-                OnTimerCall(null);
+                _timer.Stop();
+                _timer.Interval = TimeIntervalInMilliseconds;
+                _timer.Start();
             }
             _prevPoint = point;
         }
