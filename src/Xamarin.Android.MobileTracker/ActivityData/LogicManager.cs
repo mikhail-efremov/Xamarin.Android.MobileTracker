@@ -28,12 +28,12 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         private double StepTimeOutMinutes = 5.0;
         private double TimerTimeOutHour = 1.0;
-        private System.Timers.Timer _timer;
+        private readonly Timer _timer;
 
-        public int TimeIntervalInMilliseconds = 36000;
+        public int TimeIntervalInMilliseconds = 3600000;
 
-        private readonly int _intervalDefault = 36000;
-        private readonly int _intervalMin = 12000;
+        private readonly int _intervalDefault = 3600000;
+        private readonly int _intervalMin = 120000;
 
         private Point _prevPoint = null;
         private Point _prevPrevPoint = null;
@@ -61,7 +61,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             
             _locationManager = locationManager;
 
-            _timer = new System.Timers.Timer();
+            _timer = new Timer();
             _timer.Elapsed += OnTimerCall;
             _timer.Interval = TimeIntervalInMilliseconds;
             _timer.Enabled = true;
