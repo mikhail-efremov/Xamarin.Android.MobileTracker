@@ -2,9 +2,11 @@ using System;
 using System.Device.Location;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Timers;
 using Android.Locations;
 using SQLite;
+using Timer = System.Threading.Timer;
 
 namespace Xamarin.Android.MobileTracker.ActivityData
 {
@@ -27,7 +29,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
         private const int Distanse = 500;
 
         private double StepTimeOutMinutes = 5.0;
-        private double TimerTimeOutHour = 1.0;
+        private double TimerTimeOutMinutes = 3.0;
         private readonly Timer _timer;
 
         public int TimeIntervalInMilliseconds = 3600000;
@@ -61,16 +63,13 @@ namespace Xamarin.Android.MobileTracker.ActivityData
             
             _locationManager = locationManager;
 
-            _timer = new Timer();
-            _timer.Elapsed += OnTimerCall;
-            _timer.Interval = TimeIntervalInMilliseconds;
-            _timer.Enabled = true;
-
+            _timer = new Timer(OnTimerCall, null, TimeIntervalInMilliseconds, TimeIntervalInMilliseconds);
+            
             var sensorListener = new SensorListener();
             sensorListener.OnSensorChangedEvent += OnSensorChangedEvent;
         }
 
-        private void OnTimerCall(object state, ElapsedEventArgs e)
+        private void OnTimerCall(object state)
         {
             GetLocation(LocationCallReason.Timer);
         }
@@ -133,7 +132,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
                         }
                     case LocationCallReason.Timer:
                         {
-//                            if (LastLocationCall < DateTime.Now.AddSeconds(-TimerTimeOutHour))
+                            if (LastLocationCall < DateTime.Now.AddMinutes(-TimerTimeOutMinutes))
                             {
                                 ForceRequestLocation(_locationManager);
                             }
@@ -153,6 +152,7 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void StopRequestLocation()
         {
+            _isSubscribed = false;
             if (_locationListener == null) return;
             // ReSharper disable once DelegateSubtraction
             _locationListener.OnLocationChangedEvent -= OnLocationChanged;
@@ -179,30 +179,28 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         private void SetPrevPoint(Point point)
         {
-            if (_prevPoint == null)
+            try
             {
-                _prevPoint = point;
-                return;
+                if (_prevPoint == null)
+                {
+                    _prevPoint = point;
+                    return;
+                }
+
+                var prevCoord = new GeoCoordinate(_prevPoint.Latitude, _prevPoint.Longitude);
+                var coord = new GeoCoordinate(point.Latitude, point.Longitude);
+
+                var distanse = prevCoord.GetDistanceTo(coord);
+
+                lock (_timer)
+                {
+                    TimeIntervalInMilliseconds = distanse > Distanse ? _intervalMin : _intervalDefault;
+                    _timer.Change(TimeIntervalInMilliseconds, TimeIntervalInMilliseconds);
+                }
             }
-
-            var prevCoord = new GeoCoordinate(_prevPoint.Latitude, _prevPoint.Longitude);
-            var coord = new GeoCoordinate(point.Latitude, point.Longitude);
-
-            var distanse = prevCoord.GetDistanceTo(coord);
-
-            if (distanse > Distanse)
+            catch
             {
-                TimeIntervalInMilliseconds = _intervalMin;
-                _timer.Stop();
-                _timer.Interval = TimeIntervalInMilliseconds;
-                _timer.Start();
-            }
-            else
-            {
-                TimeIntervalInMilliseconds = _intervalDefault;
-                _timer.Stop();
-                _timer.Interval = TimeIntervalInMilliseconds;
-                _timer.Start();
+                // ignored
             }
             _prevPoint = point;
         }
