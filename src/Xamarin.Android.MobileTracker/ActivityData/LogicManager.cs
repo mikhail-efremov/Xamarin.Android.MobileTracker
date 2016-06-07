@@ -161,19 +161,26 @@ namespace Xamarin.Android.MobileTracker.ActivityData
 
         public void OnLocationChanged(Location location)
         {
-            LastLocationCall = DateTime.Now;
-            IsRequestSendeed = false;
-            if (location == null)
+            try
             {
-                Console.WriteLine("Unable to determine your location. Try again in a short while.");
+                LastLocationCall = DateTime.Now;
+                IsRequestSendeed = false;
+                if (location == null)
+                {
+                    Console.WriteLine("Unable to determine your location. Try again in a short while.");
+                }
+                else
+                {
+                    OnLocationChangedEvent(location);
+                    var point = new Point(_uniqueId, location);
+                    SetPrevPoint(point);
+                    SaveInBase(point);
+                    SendToServer(point);
+                }
             }
-            else
+            catch (Exception e)
             {
-                OnLocationChangedEvent(location);
-                var point = new Point(_uniqueId, location);
-                SetPrevPoint(point);
-                SaveInBase(point);
-                SendToServer(point);
+                OnError(e);
             }
         }
 

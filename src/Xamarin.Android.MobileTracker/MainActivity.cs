@@ -225,11 +225,19 @@ namespace Xamarin.Android.MobileTracker
         private int _counter;
         private async void OnLocationChanged(Location location)
         {
-            _counter++;
-            _currentLocation = location;
-            _locationText.Text = _counter + "Lat:" + _currentLocation.Latitude + " Lon:" +  _currentLocation.Longitude;
-            var address = await ReverseGeocodeCurrentLocation();
-            DisplayAddress(address);
+            try
+            {
+                _counter++;
+                _currentLocation = location;
+                _locationText.Text = _counter + "Lat:" + _currentLocation.Latitude + " Lon:" +
+                                     _currentLocation.Longitude;
+                var address = await ReverseGeocodeCurrentLocation();
+                DisplayAddress(address);
+            }
+            catch (Exception e)
+            {
+                OnError(e);
+            }
         }
 
         protected override void OnResume()
